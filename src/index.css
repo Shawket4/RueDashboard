@@ -1,5 +1,25 @@
 @import "tailwindcss";
 
 * {
-    font-family: 'Cairo', sans-serif;
-  }
+  font-family: 'Cairo', sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body, #root {
+  overflow-x: hidden;
+  overscroll-behavior: none;
+}
+
+/* Safe area support for iPhone notch/home bar */
+.safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+.safe-top    { padding-top:    env(safe-area-inset-top); }
+
+/* Prevent table overflow breaking layout */
+.table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+/* Mobile card stacks instead of tables */
+@media (max-width: 640px) {
+  .mobile-card-list { display: flex; flex-direction: column; gap: 0.75rem; }
+  .mobile-hide      { display: none !important; }
+  .mobile-full      { width: 100% !important; }
+}

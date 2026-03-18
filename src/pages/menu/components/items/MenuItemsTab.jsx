@@ -55,9 +55,25 @@ export default function MenuItemsTab({ orgId }) {
 
   return (
     <>
+      {/* Mobile: horizontal category scroll */}
+      <div className="flex sm:hidden gap-2 overflow-x-auto pb-1 px-0.5 -mx-0.5">
+        <button
+          onClick={() => setSelCat(null)}
+          className={`flex-shrink-0 px-3 py-2 rounded-xl text-xs font-semibold transition-all
+            ${!selCat ? "bg-white shadow border border-gray-200 text-gray-900" : "bg-gray-100 text-gray-500"}`}
+        >All</button>
+        {categories?.map((cat) => (
+          <button key={cat.id} onClick={() => setSelCat(cat.id)}
+            className={`flex-shrink-0 px-3 py-2 rounded-xl text-xs font-semibold transition-all
+              ${selCat === cat.id ? "bg-white shadow border border-gray-200 text-gray-900" : "bg-gray-100 text-gray-500"}`}>
+            {cat.name}
+          </button>
+        ))}
+      </div>
+
       <div className="flex gap-6">
-        {/* Category sidebar */}
-        <div className="w-52 flex-shrink-0 space-y-1.5">
+        {/* Category sidebar — desktop only */}
+        <div className="hidden sm:block w-52 flex-shrink-0 space-y-1.5">
           <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest px-1 mb-3">Categories</p>
           <button
             onClick={() => setSelCat(null)}
@@ -89,6 +105,7 @@ export default function MenuItemsTab({ orgId }) {
           )}
         </div>
 
+        </div>{/* end desktop sidebar */}
         {/* Items panel */}
         <div className="flex-1 min-w-0">
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
@@ -108,7 +125,7 @@ export default function MenuItemsTab({ orgId }) {
             {itemsLoading ? (
               <Spinner />
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 p-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 p-3 sm:p-6">
                 {items?.map((item) => (
                   <ItemCard
                     key={item.id}
@@ -129,7 +146,6 @@ export default function MenuItemsTab({ orgId }) {
             )}
           </div>
         </div>
-      </div>
 
       {/* Modals / Drawer */}
       {modal && (

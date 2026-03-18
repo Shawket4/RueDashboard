@@ -1,112 +1,18 @@
 #!/usr/bin/env bash
-# =============================================================================
-#  RuePOS React Dashboard — Bug Fixes + Image Upload
-#  Usage:  bash fix_dashboard.sh [path/to/react/src]
-#  Default: ./src
-# =============================================================================
+# ─────────────────────────────────────────────────────────────────────────────
+#  make_responsive.sh
+#  Run from the root of your dashboard project (where src/ lives).
+#  Rewrites every component to be fully responsive / iPhone-friendly.
+# ─────────────────────────────────────────────────────────────────────────────
 set -e
-SRC="${1:-./src}"
-[ -d "$SRC" ] || { echo "ERROR: src not found: $SRC"; exit 1; }
-echo "==> Patching React dashboard at: $(cd "$SRC" && pwd)"
+SRC="src"
 
-write() {
-  local dest="$SRC/$1"
-  mkdir -p "$(dirname "$dest")"
-  cat > "$dest"
-  echo "  written: $1"
-}
+echo "▶  Starting responsive rewrite…"
 
-# ──────────────────────────────────────────────────────────────────────
-# App.css
-# ──────────────────────────────────────────────────────────────────────
-write 'App.css' << 'JS_EOF'
-/* App.css — Vite defaults removed */
-
-JS_EOF
-
-# ──────────────────────────────────────────────────────────────────────
-# api/client.js
-# ──────────────────────────────────────────────────────────────────────
-write 'api/client.js' << 'JS_EOF'
-import axios from "axios";
-
-const client = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://187.124.33.153:8080",
-  headers: { "Content-Type": "application/json" },
-  timeout: 15000,
-});
-
-client.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
-  if (token) config.headers.Authorization = `Bearer ${token}`;
-  return config;
-});
-
-client.interceptors.response.use(
-  (res) => res,
-  (err) => {
-    if (err.response?.status === 401) {
-      localStorage.removeItem("token");
-      window.location.href = "/login";
-    }
-    return Promise.reject(err);
-  }
-);
-
-export default client;
-
-JS_EOF
-
-# ──────────────────────────────────────────────────────────────────────
-# api/menu.js
-# ──────────────────────────────────────────────────────────────────────
-write 'api/menu.js' << 'JS_EOF'
-import client from "./client";
-
-export const getCategories    = (orgId)        => client.get("/categories",   { params: { org_id: orgId } });
-export const createCategory   = (data)         => client.post("/categories",  data);
-export const updateCategory   = (id, data)     => client.patch(`/categories/${id}`, data);
-export const deleteCategory   = (id)           => client.delete(`/categories/${id}`);
-
-export const getMenuItems     = (orgId, catId) => client.get("/menu-items",   { params: { org_id: orgId, ...(catId ? { category_id: catId } : {}) } });
-export const getMenuItem      = (id)           => client.get(`/menu-items/${id}`);
-export const createMenuItem   = (data)         => client.post("/menu-items",  data);
-export const updateMenuItem   = (id, data)     => client.patch(`/menu-items/${id}`, data);
-export const deleteMenuItem   = (id)           => client.delete(`/menu-items/${id}`);
-
-// Image upload endpoint — POST /uploads/menu-items/:id
-// multipart/form-data, field name: "image"
-// Returns: { image_url: string }
-export const uploadMenuItemImage = (id, file) => {
-  const form = new FormData();
-  form.append("image", file);
-  return client.post(`/uploads/menu-items/${id}`, form, {
-    headers: { "Content-Type": "multipart/form-data" },
-  });
-};
-
-export const getAddonItems    = (orgId, type)  => client.get("/addon-items",  { params: { org_id: orgId, ...(type ? { addon_type: type } : {}) } });
-export const createAddonItem  = (data)         => client.post("/addon-items", data);
-export const updateAddonItem  = (id, data)     => client.patch(`/addon-items/${id}`, data);
-export const deleteAddonItem  = (id)           => client.delete(`/addon-items/${id}`);
-
-export const getOptionGroups    = (itemId)            => client.get(`/menu-items/${itemId}/option-groups`);
-export const createOptionGroup  = (itemId, data)      => client.post(`/menu-items/${itemId}/option-groups`, data);
-export const updateOptionGroup  = (itemId, gid, data) => client.patch(`/menu-items/${itemId}/option-groups/${gid}`, data);
-export const deleteOptionGroup  = (itemId, gid)       => client.delete(`/menu-items/${itemId}/option-groups/${gid}`);
-export const addOptionItem      = (itemId, gid, data)      => client.post(`/menu-items/${itemId}/option-groups/${gid}/items`, data);
-export const updateOptionItem   = (itemId, gid, oid, data) => client.patch(`/menu-items/${itemId}/option-groups/${gid}/items/${oid}`, data);
-export const deleteOptionItem   = (itemId, gid, oid)       => client.delete(`/menu-items/${itemId}/option-groups/${gid}/items/${oid}`);
-
-export const upsertSize  = (itemId, data) => client.post(`/menu-items/${itemId}/sizes`, data);
-export const deleteSize  = (itemId, sid)  => client.delete(`/menu-items/${itemId}/sizes/${sid}`);
-
-JS_EOF
-
-# ──────────────────────────────────────────────────────────────────────
-# components/Layout.jsx
-# ──────────────────────────────────────────────────────────────────────
-write 'components/Layout.jsx' << 'JS_EOF'
+# ─────────────────────────────────────────────────────────────────────────────
+#  1. Layout.jsx  — mobile header with hamburger space
+# ─────────────────────────────────────────────────────────────────────────────
+cat > "$SRC/components/Layout.jsx" << 'ENDOFFILE'
 import { Outlet, useLocation } from "react-router-dom";
 import Sidebar from "./Sidebar";
 
@@ -131,559 +37,1343 @@ export default function Layout() {
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
       <Sidebar />
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         <header className="bg-white border-b border-gray-100 shadow-sm flex-shrink-0">
-          <div className="flex items-center px-6 lg:px-8 h-16">
-            <div className="lg:hidden w-8" />
-            <div>
-              <h1 className="text-lg font-bold text-gray-900 leading-none">{meta.title}</h1>
-              {meta.sub && <p className="text-gray-400 text-xs mt-0.5">{meta.sub}</p>}
+          <div className="flex items-center px-4 lg:px-8 h-14 lg:h-16 gap-3">
+            {/* Space for mobile hamburger button (rendered inside Sidebar) */}
+            <div className="w-10 lg:hidden flex-shrink-0" />
+            <div className="min-w-0">
+              <h1 className="text-base lg:text-lg font-bold text-gray-900 leading-none truncate">{meta.title}</h1>
+              {meta.sub && <p className="text-gray-400 text-xs mt-0.5 truncate hidden sm:block">{meta.sub}</p>}
             </div>
           </div>
         </header>
-        <main className="flex-1 overflow-y-auto">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden">
           <Outlet />
         </main>
       </div>
     </div>
   );
 }
+ENDOFFILE
 
-JS_EOF
+echo "  ✓  Layout.jsx"
 
-# ──────────────────────────────────────────────────────────────────────
-# pages/menu/components/items/ItemCard.jsx
-# ──────────────────────────────────────────────────────────────────────
-write 'pages/menu/components/items/ItemCard.jsx' << 'JS_EOF'
-import { Pencil, Trash2, Settings } from "lucide-react";
-import { fmtEGP } from "../../constants";
-import ActiveBadge from "../shared/ActiveBadge";
+# ─────────────────────────────────────────────────────────────────────────────
+#  2. index.css  — add safe-area insets + prevent horizontal scroll
+# ─────────────────────────────────────────────────────────────────────────────
+cat > "$SRC/index.css" << 'ENDOFFILE'
+@import "tailwindcss";
 
-export default function ItemCard({ item, isSelected, onSelect, onEdit, onDelete, onConfigure }) {
+* {
+  font-family: 'Cairo', sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body, #root {
+  overflow-x: hidden;
+  overscroll-behavior: none;
+}
+
+/* Safe area support for iPhone notch/home bar */
+.safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+.safe-top    { padding-top:    env(safe-area-inset-top); }
+
+/* Prevent table overflow breaking layout */
+.table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+/* Mobile card stacks instead of tables */
+@media (max-width: 640px) {
+  .mobile-card-list { display: flex; flex-direction: column; gap: 0.75rem; }
+  .mobile-hide      { display: none !important; }
+  .mobile-full      { width: 100% !important; }
+}
+ENDOFFILE
+
+echo "  ✓  index.css"
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  3. Dashboard.jsx  — responsive grid + mobile-friendly stat cards
+# ─────────────────────────────────────────────────────────────────────────────
+cat > "$SRC/pages/Dashboard.jsx" << 'ENDOFFILE'
+import React from "react";
+import { useAuth } from "../store/auth.jsx";
+import { useQuery } from "@tanstack/react-query";
+import {
+  Building2, Users, GitBranch, Coffee, TrendingUp,
+  AlertTriangle, Clock, ShoppingBag, CheckCircle2,
+  ArrowRight, Package, RefreshCw,
+} from "lucide-react";
+import { getOrgs } from "../api/orgs";
+import { getUsers } from "../api/users";
+import { getBranches } from "../api/branches";
+import { getCurrentShift } from "../api/shifts";
+import { getInventoryItems } from "../api/inventory";
+import { getOrders } from "../api/orders";
+import { Link } from "react-router-dom";
+
+const egp = (n = 0) =>
+  `EGP ${(n / 100).toLocaleString("en", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+
+const fmtTime = (iso) =>
+  iso ? new Date(iso).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }) : "—";
+
+const dur = (start) => {
+  const ms = Date.now() - new Date(start);
+  const h  = Math.floor(ms / 3_600_000);
+  const m  = Math.floor((ms % 3_600_000) / 60_000);
+  return h > 0 ? `${h}h ${m}m` : `${m}m`;
+};
+
+const norm = (s = "") =>
+  s.split(" ").map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ");
+
+const greet = (name) => {
+  const h = new Date().getHours();
+  const word = h < 12 ? "Morning" : h < 17 ? "Afternoon" : "Evening";
+  return `Good ${word}, ${name?.split(" ")[0]} 👋`;
+};
+
+function Skeleton({ className = "" }) {
+  return <div className={`animate-pulse bg-gray-200 rounded-lg ${className}`} />;
+}
+
+function StatCard({ icon: Icon, label, value, sub, color, bg, border, loading, to }) {
+  const inner = (
+    <div className={`bg-white rounded-2xl border ${border} p-4 sm:p-5 shadow-sm hover:shadow-md transition-all group h-full flex flex-col justify-between`}>
+      <div className="flex items-start justify-between mb-3 sm:mb-4">
+        <div className={`w-9 h-9 sm:w-10 sm:h-10 ${bg} rounded-xl flex items-center justify-center flex-shrink-0`}>
+          <Icon size={16} className={color} />
+        </div>
+        {to && (
+          <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+            <ArrowRight size={14} className="text-gray-300" />
+          </div>
+        )}
+      </div>
+      <div>
+        {loading ? (
+          <>
+            <Skeleton className="h-7 w-14 mb-2" />
+            <Skeleton className="h-3 w-20 mb-1" />
+            <Skeleton className="h-3 w-16" />
+          </>
+        ) : (
+          <>
+            <p className="text-2xl sm:text-3xl font-bold text-gray-900 leading-none tabular-nums">{value ?? "—"}</p>
+            <p className="text-gray-600 font-semibold text-xs sm:text-sm mt-1.5 sm:mt-2 leading-tight">{label}</p>
+            {sub && <p className="text-gray-400 text-xs mt-0.5 leading-tight">{sub}</p>}
+          </>
+        )}
+      </div>
+    </div>
+  );
+  return to ? <Link to={to} className="block h-full">{inner}</Link> : inner;
+}
+
+function BranchCard({ branch }) {
+  const { data: shiftData, isLoading: shiftLoading } = useQuery({
+    queryKey: ["current-shift", branch.id],
+    queryFn:  () => getCurrentShift(branch.id).then((r) => r.data),
+    refetchInterval: 60_000,
+  });
+
+  const shiftId = shiftData?.open_shift?.id;
+
+  const { data: orders = [] } = useQuery({
+    queryKey: ["shift-orders-flat", shiftId],
+    queryFn:  () => getOrders({ shift_id: shiftId }).then((r) => r.data),
+    enabled:  !!shiftId,
+    staleTime: 30_000,
+  });
+
+  const { data: invItems = [] } = useQuery({
+    queryKey: ["inventory", branch.id],
+    queryFn:  () => getInventoryItems(branch.id).then((r) => r.data),
+    staleTime: 120_000,
+  });
+
+  const hasOpen   = shiftData?.has_open_shift;
+  const openShift = shiftData?.open_shift;
+  const validOrds = orders.filter((o) => o.status !== "voided");
+  const todaySales = validOrds.reduce((s, o) => s + (o.total_amount || 0), 0);
+  const lowStock  = invItems.filter((i) => parseFloat(i.current_stock) <= parseFloat(i.reorder_threshold));
+
   return (
-    <div
-      className={`rounded-2xl border transition-all overflow-hidden group relative
-        ${item.is_active ? "border-gray-100 hover:shadow-md" : "border-gray-100 opacity-50"}
-        ${isSelected ? "ring-2 ring-blue-500 border-blue-200" : ""}`}
-    >
-      {/* Checkbox */}
-      <div
-        className={`absolute top-3 left-3 z-10 transition-opacity
-          ${isSelected ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}
-      >
-        <input
-          type="checkbox"
-          checked={isSelected}
-          onChange={() => onSelect(item.id)}
-          onClick={(e) => e.stopPropagation()}
-          className="w-4 h-4 rounded accent-blue-600 cursor-pointer"
-        />
+    <div className={`bg-white rounded-2xl border shadow-sm overflow-hidden transition-all hover:shadow-md
+      ${hasOpen ? "border-green-200" : "border-gray-100"}`}>
+      <div className={`px-4 py-3 flex items-center justify-between border-b
+        ${hasOpen ? "bg-green-50 border-green-100" : "bg-gray-50 border-gray-100"}`}>
+        <div className="flex items-center gap-2 min-w-0">
+          <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0
+            ${shiftLoading ? "bg-gray-300 animate-pulse" : hasOpen ? "bg-green-500 shadow-[0_0_0_3px_rgba(34,197,94,0.2)]" : "bg-gray-300"}`} />
+          <p className="font-semibold text-gray-900 text-sm truncate">{branch.name}</p>
+        </div>
+        {!shiftLoading && (
+          <span className={`text-xs font-semibold px-2 py-1 rounded-full flex-shrink-0 ml-2
+            ${hasOpen ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}`}>
+            {hasOpen ? "Open" : "Closed"}
+          </span>
+        )}
       </div>
 
-      {/* Image thumbnail — shown when image_url is set */}
-      {item.image_url && (
-        <div className="w-full h-28 overflow-hidden bg-gray-100">
-          <img
-            src={item.image_url}
-            alt={item.name}
-            className="w-full h-full object-cover"
-            onError={(e) => { e.currentTarget.style.display = "none"; }}
-          />
+      <div className="px-4 py-3 space-y-2.5">
+        {shiftLoading ? (
+          <div className="space-y-2">
+            <Skeleton className="h-3.5 w-full" />
+            <Skeleton className="h-3.5 w-3/4" />
+          </div>
+        ) : hasOpen && openShift ? (
+          <>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
+              <span className="text-gray-500">Teller</span>
+              <span className="font-semibold text-gray-800 text-right truncate">{openShift.teller_name}</span>
+              <span className="text-gray-500">Running</span>
+              <span className="font-mono text-gray-600 text-right">{dur(openShift.opened_at)}</span>
+              <span className="text-gray-500">Opening</span>
+              <span className="font-mono text-gray-600 text-right">{egp(openShift.opening_cash)}</span>
+            </div>
+            <div className="pt-1.5 border-t border-gray-50">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-500">Today's Sales</span>
+                <span className="font-bold text-blue-600 text-sm font-mono">{egp(todaySales)}</span>
+              </div>
+              <div className="flex items-center justify-between mt-0.5">
+                <span className="text-xs text-gray-400">{validOrds.length} orders</span>
+                {orders.filter((o) => o.status === "voided").length > 0 && (
+                  <span className="text-xs text-red-400">
+                    {orders.filter((o) => o.status === "voided").length} voided
+                  </span>
+                )}
+              </div>
+            </div>
+          </>
+        ) : (
+          <p className="text-sm text-gray-400 text-center py-2">No active shift</p>
+        )}
+
+        {lowStock.length > 0 && (
+          <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
+            <AlertTriangle size={12} className="text-amber-600 flex-shrink-0" />
+            <span className="text-xs font-semibold text-amber-700">
+              {lowStock.length} item{lowStock.length > 1 ? "s" : ""} low on stock
+            </span>
+          </div>
+        )}
+      </div>
+
+      <div className="px-4 pb-4">
+        <Link
+          to="/shifts"
+          className="flex items-center justify-center gap-1.5 w-full py-2 rounded-xl text-xs font-semibold text-gray-500 bg-gray-100 hover:bg-gray-200 transition-colors"
+        >
+          View Shifts <ArrowRight size={11} />
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+function RecentOrders({ branches }) {
+  const [activeBranchId, setActiveBranchId] = React.useState(null);
+  const [shiftId, setShiftId] = React.useState(null);
+
+  useQuery({
+    queryKey: ["recent-orders-branch-scan", branches?.map((b) => b.id).join(",")],
+    enabled: !!branches?.length && !activeBranchId,
+    queryFn: async () => {
+      for (const branch of branches) {
+        try {
+          const r = await getCurrentShift(branch.id).then((res) => res.data);
+          if (r?.has_open_shift && r.open_shift?.id) {
+            setActiveBranchId(branch.id);
+            setShiftId(r.open_shift.id);
+            return r;
+          }
+        } catch (_) {}
+      }
+      return null;
+    },
+  });
+
+  const { data: orders = [], isLoading } = useQuery({
+    queryKey: ["shift-orders-flat", shiftId],
+    queryFn:  () => getOrders({ shift_id: shiftId }).then((r) => r.data),
+    enabled:  !!shiftId,
+    staleTime: 30_000,
+    refetchInterval: 60_000,
+  });
+
+  const recent = [...orders]
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+    .slice(0, 8);
+
+  const PAYMENT_STYLE = {
+    cash:           "bg-green-50 text-green-700",
+    card:           "bg-blue-50 text-blue-700",
+    digital_wallet: "bg-purple-50 text-purple-700",
+  };
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+      <div className="px-4 sm:px-6 py-3.5 border-b border-gray-100 flex items-center justify-between">
+        <div className="flex items-center gap-2 min-w-0">
+          <ShoppingBag size={14} className="text-blue-600 flex-shrink-0" />
+          <h3 className="font-semibold text-gray-900 text-sm truncate">Recent Orders</h3>
+          {shiftId && (
+            <span className="text-xs text-gray-400 font-mono hidden sm:block truncate">
+              {activeBranchId && branches?.find((b) => b.id === activeBranchId)?.name}
+            </span>
+          )}
+        </div>
+        <Link to="/shifts" className="text-xs font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1 flex-shrink-0 ml-2">
+          All <ArrowRight size={11} />
+        </Link>
+      </div>
+
+      {isLoading ? (
+        <div className="p-4 space-y-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="flex items-center gap-3">
+              <Skeleton className="h-9 w-9 rounded-xl flex-shrink-0" />
+              <div className="flex-1 space-y-1.5"><Skeleton className="h-3 w-28" /><Skeleton className="h-3 w-16" /></div>
+              <Skeleton className="h-4 w-14 flex-shrink-0" />
+            </div>
+          ))}
+        </div>
+      ) : !shiftId ? (
+        <div className="flex flex-col items-center justify-center py-10 text-gray-400 gap-2">
+          <ShoppingBag size={24} className="text-gray-200" />
+          <p className="text-sm">No open shift found</p>
+        </div>
+      ) : recent.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-10 text-gray-400 gap-2">
+          <ShoppingBag size={24} className="text-gray-200" />
+          <p className="text-sm">No orders yet this shift</p>
+        </div>
+      ) : (
+        <div className="divide-y divide-gray-50">
+          {recent.map((order) => {
+            const isVoided = order.status === "voided";
+            return (
+              <div key={order.id}
+                className={`flex items-center gap-3 px-4 sm:px-5 py-3 hover:bg-gray-50 transition-colors ${isVoided ? "opacity-50" : ""}`}>
+                <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center flex-shrink-0 font-bold text-xs
+                  ${isVoided ? "bg-gray-100 text-gray-400" : "bg-blue-50 text-blue-600"}`}>
+                  #{order.order_number}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className={`text-xs font-semibold px-1.5 py-0.5 rounded-full
+                      ${PAYMENT_STYLE[order.payment_method] || "bg-gray-100 text-gray-600"}`}>
+                      {norm(order.payment_method || "")}
+                    </span>
+                    {isVoided && (
+                      <span className="text-xs font-semibold text-red-500 bg-red-50 px-1.5 py-0.5 rounded-full">Voided</span>
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-400 mt-0.5">{fmtTime(order.created_at)}</p>
+                </div>
+                <p className={`font-bold text-sm font-mono flex-shrink-0
+                  ${isVoided ? "text-gray-400 line-through" : "text-gray-900"}`}>
+                  {egp(order.total_amount)}
+                </p>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function LowStockPanel({ branches }) {
+  const { data: items = [], isLoading } = useQuery({
+    queryKey: ["inventory-all", branches?.map((b) => b.id)],
+    enabled:  !!branches?.length,
+    staleTime: 120_000,
+    queryFn: async () => {
+      const results = await Promise.allSettled(
+        (branches ?? []).map((b) => getInventoryItems(b.id).then((r) => r.data))
+      );
+      const map = new Map();
+      results
+        .filter((r) => r.status === "fulfilled")
+        .flatMap((r) => r.value)
+        .forEach((item) => {
+          const existing = map.get(item.name);
+          if (!existing || parseFloat(item.current_stock) < parseFloat(existing.current_stock)) {
+            map.set(item.name, item);
+          }
+        });
+      return [...map.values()];
+    },
+  });
+
+  const low = items
+    .filter((i) => parseFloat(i.current_stock) <= parseFloat(i.reorder_threshold))
+    .sort((a, b) => (parseFloat(a.current_stock) / parseFloat(a.reorder_threshold)) - (parseFloat(b.current_stock) / parseFloat(b.reorder_threshold)))
+    .slice(0, 6);
+
+  const UNIT = { g: "g", kg: "kg", ml: "ml", l: "L", pcs: "pcs" };
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+      <div className="px-4 sm:px-6 py-3.5 border-b border-gray-100 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Package size={14} className="text-amber-500 flex-shrink-0" />
+          <h3 className="font-semibold text-gray-900 text-sm">Low Stock</h3>
+          {low.length > 0 && (
+            <span className="text-xs font-bold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">{low.length}</span>
+          )}
+        </div>
+        <Link to="/inventory" className="text-xs font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1 flex-shrink-0 ml-2">
+          Inventory <ArrowRight size={11} />
+        </Link>
+      </div>
+
+      {isLoading ? (
+        <div className="p-4 space-y-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="flex-1 space-y-1.5">
+              <Skeleton className="h-3 w-28" />
+              <Skeleton className="h-2 w-full rounded-full" />
+            </div>
+          ))}
+        </div>
+      ) : low.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-10 text-gray-400 gap-2">
+          <CheckCircle2 size={24} className="text-green-400" />
+          <p className="text-sm">All stock levels OK</p>
+        </div>
+      ) : (
+        <div className="divide-y divide-gray-50">
+          {low.map((item) => {
+            const pct = Math.min((parseFloat(item.current_stock) / parseFloat(item.reorder_threshold)) * 100, 100);
+            const critical = parseFloat(item.current_stock) === 0;
+            return (
+              <div key={item.id} className="px-4 sm:px-5 py-3">
+                <div className="flex items-center justify-between mb-1">
+                  <p className="text-sm font-medium text-gray-800 truncate mr-2">{item.name}</p>
+                  <span className={`text-xs font-bold font-mono flex-shrink-0 ${critical ? "text-red-600" : "text-amber-600"}`}>
+                    {item.current_stock} {UNIT[item.unit] ?? item.unit}
+                  </span>
+                </div>
+                <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
+                  <div className={`h-full rounded-full transition-all ${critical ? "bg-red-500" : "bg-amber-400"}`}
+                    style={{ width: `${Math.max(pct, 3)}%` }} />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SalesSummary({ branches }) {
+  const { data: salesData, isLoading } = useQuery({
+    queryKey: ["dashboard-sales-agg", branches?.map((b) => b.id)],
+    enabled:  !!branches?.length,
+    staleTime: 60_000,
+    queryFn: async () => {
+      let totalSales = 0, totalOrders = 0, totalCash = 0, totalCard = 0, openBranches = 0;
+      await Promise.allSettled(
+        (branches ?? []).map(async (branch) => {
+          try {
+            const shiftData = await getCurrentShift(branch.id).then((r) => r.data);
+            if (!shiftData?.has_open_shift || !shiftData.open_shift?.id) return;
+            openBranches++;
+            const orders = await getOrders({ shift_id: shiftData.open_shift.id }).then((r) => r.data);
+            const valid = orders.filter((o) => o.status !== "voided");
+            totalOrders += valid.length;
+            valid.forEach((o) => {
+              totalSales += o.total_amount || 0;
+              if (o.payment_method === "cash") totalCash += o.total_amount || 0;
+              if (o.payment_method === "card") totalCard += o.total_amount || 0;
+            });
+          } catch (_) {}
+        })
+      );
+      return { totalSales, totalOrders, totalCash, totalCard, openBranches };
+    },
+  });
+
+  const items = [
+    { label: "Total Sales", value: egp(salesData?.totalSales),  color: "text-blue-600"   },
+    { label: "Orders",      value: salesData?.totalOrders ?? 0, color: "text-green-600"  },
+    { label: "Cash",        value: egp(salesData?.totalCash),   color: "text-gray-700"   },
+    { label: "Card",        value: egp(salesData?.totalCard),   color: "text-violet-600" },
+  ];
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+      <div className="px-4 sm:px-6 py-3.5 border-b border-gray-100 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <TrendingUp size={14} className="text-blue-600" />
+          <h3 className="font-semibold text-gray-900 text-sm">Today's Sales</h3>
+          {!isLoading && salesData && (
+            <span className="text-xs text-gray-400">{salesData.openBranches} active</span>
+          )}
+        </div>
+        <Link to="/shifts" className="text-xs font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1 flex-shrink-0">
+          Details <ArrowRight size={11} />
+        </Link>
+      </div>
+      <div className="grid grid-cols-2 gap-px bg-gray-100">
+        {items.map(({ label, value, color }) => (
+          <div key={label} className="bg-white px-4 sm:px-5 py-3 sm:py-4">
+            {isLoading ? (
+              <><Skeleton className="h-5 w-20 mb-1" /><Skeleton className="h-3 w-12 mt-1" /></>
+            ) : (
+              <><p className={`text-base sm:text-lg font-bold font-mono ${color}`}>{value}</p>
+              <p className="text-xs text-gray-400 mt-0.5">{label}</p></>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function BranchStatusRow({ branch }) {
+  const { data, isLoading } = useQuery({
+    queryKey: ["current-shift", branch.id],
+    queryFn:  () => getCurrentShift(branch.id).then((r) => r.data),
+    refetchInterval: 60_000,
+    staleTime: 30_000,
+  });
+  const hasOpen = data?.has_open_shift;
+  const shift   = data?.open_shift;
+  return (
+    <div className="flex items-center gap-3 px-4 sm:px-5 py-3">
+      <div className={`w-2 h-2 rounded-full flex-shrink-0 ${isLoading ? "bg-gray-200 animate-pulse" : hasOpen ? "bg-green-500" : "bg-gray-300"}`} />
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium text-gray-800 truncate">{branch.name}</p>
+        {!isLoading && hasOpen && shift && (
+          <p className="text-xs text-gray-400 truncate">{shift.teller_name} · {dur(shift.opened_at)}</p>
+        )}
+        {!isLoading && !hasOpen && <p className="text-xs text-gray-400">No active shift</p>}
+      </div>
+      {isLoading ? <Skeleton className="h-5 w-14" /> : (
+        <span className={`text-xs font-semibold px-2 py-1 rounded-full flex-shrink-0
+          ${hasOpen ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}`}>
+          {hasOpen ? "Open" : "Closed"}
+        </span>
+      )}
+    </div>
+  );
+}
+
+function SuperAdminStats() {
+  const { data: orgs,  isLoading: orgsLoading  } = useQuery({ queryKey: ["orgs"],       queryFn: () => getOrgs().then((r) => r.data) });
+  const { data: users, isLoading: usersLoading } = useQuery({ queryKey: ["users", null], queryFn: () => getUsers(null).then((r) => r.data) });
+  const stats = [
+    { icon: Building2, label: "Organizations", value: orgs?.length,  sub: "Active brands",   color: "text-blue-600",   bg: "bg-blue-50",   border: "border-blue-100",   loading: orgsLoading,  to: "/orgs"  },
+    { icon: Users,     label: "Total Users",   value: users?.length, sub: "Staff accounts",  color: "text-violet-600", bg: "bg-violet-50", border: "border-violet-100", loading: usersLoading, to: "/users" },
+    { icon: GitBranch, label: "Orgs Active",   value: orgs?.filter(o => o.is_active).length,  sub: "Live now", color: "text-amber-600", bg: "bg-amber-50", border: "border-amber-100", loading: orgsLoading },
+    { icon: Coffee,    label: "Active Users",  value: users?.filter(u => u.is_active).length, sub: "Accounts", color: "text-green-600", bg: "bg-green-50", border: "border-green-100", loading: usersLoading },
+  ];
+  return (
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      {stats.map((s, i) => <StatCard key={i} {...s} />)}
+    </div>
+  );
+}
+
+function ActiveShiftsCard({ branches, loading }) {
+  const { data: shiftCount, isLoading: countLoading } = useQuery({
+    queryKey: ["active-shifts-count", branches?.map((b) => b.id)],
+    enabled: !!branches?.length,
+    staleTime: 60_000,
+    queryFn: async () => {
+      let count = 0;
+      await Promise.allSettled(
+        (branches ?? []).map(async (b) => {
+          const d = await getCurrentShift(b.id).then((r) => r.data).catch(() => null);
+          if (d?.has_open_shift) count++;
+        })
+      );
+      return count;
+    },
+  });
+  return (
+    <div className="bg-white rounded-2xl border border-green-100 p-4 sm:p-5 shadow-sm hover:shadow-md transition-all h-full flex flex-col justify-between">
+      <div className="flex items-start justify-between mb-3 sm:mb-4">
+        <div className="w-9 h-9 sm:w-10 sm:h-10 bg-green-50 rounded-xl flex items-center justify-center flex-shrink-0">
+          <Clock size={16} className="text-green-600" />
+        </div>
+      </div>
+      <div>
+        {loading || countLoading ? (
+          <><Skeleton className="h-7 w-10 mb-2" /><Skeleton className="h-3 w-24 mb-1" /></>
+        ) : (
+          <>
+            <p className="text-2xl sm:text-3xl font-bold text-gray-900 leading-none">{shiftCount ?? 0}</p>
+            <p className="text-gray-600 font-semibold text-xs sm:text-sm mt-1.5 sm:mt-2">Active Shifts</p>
+            <p className="text-gray-400 text-xs mt-0.5">of {branches?.length ?? 0} branches</p>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function OrgAdminStats({ orgId }) {
+  const { data: users,    isLoading: usersLoading    } = useQuery({ queryKey: ["users", orgId],    queryFn: () => getUsers(orgId).then((r) => r.data),    enabled: !!orgId });
+  const { data: branches, isLoading: branchesLoading } = useQuery({ queryKey: ["branches", orgId], queryFn: () => getBranches(orgId).then((r) => r.data), enabled: !!orgId });
+  const stats = [
+    { icon: Users,     label: "Staff",    value: users?.length,    sub: `${users?.filter(u => u.is_active).length ?? 0} active`,    color: "text-violet-600", bg: "bg-violet-50", border: "border-violet-100", loading: usersLoading,    to: "/users"    },
+    { icon: GitBranch, label: "Branches", value: branches?.length, sub: `${branches?.filter(b => b.is_active).length ?? 0} active`,  color: "text-blue-600",   bg: "bg-blue-50",   border: "border-blue-100",   loading: branchesLoading, to: "/branches" },
+    { icon: Coffee,    label: "Operating",value: branches?.filter(b => b.is_active).length, sub: "Today", color: "text-amber-600", bg: "bg-amber-50", border: "border-amber-100", loading: branchesLoading },
+  ];
+  return (
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      {stats.map((s, i) => <StatCard key={i} {...s} />)}
+      <ActiveShiftsCard branches={branches} loading={branchesLoading} />
+    </div>
+  );
+}
+
+export default function Dashboard() {
+  const { user } = useAuth();
+  const orgId    = user?.org_id;
+  const role     = user?.role;
+
+  const { data: branches, isLoading: branchesLoading } = useQuery({
+    queryKey: ["branches", orgId],
+    queryFn:  () => getBranches(orgId).then((r) => r.data),
+    enabled:  !!orgId,
+    staleTime: 120_000,
+  });
+
+  const isSuperAdmin   = role === "super_admin";
+  const isOrgLevel     = ["org_admin", "branch_manager"].includes(role);
+  const showBranchGrid = isOrgLevel && (branches?.length ?? 0) > 0;
+
+  return (
+    <div className="p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-6">
+
+      {/* Welcome hero */}
+      <div className="rounded-2xl p-5 sm:p-6 lg:p-8 text-white relative overflow-hidden"
+        style={{ background: "linear-gradient(135deg, #1a56db 0%, #3b28cc 100%)" }}>
+        <div className="absolute -top-8 -right-8 w-40 h-40 rounded-full bg-white/10" />
+        <div className="absolute -bottom-10 right-24 w-32 h-32 rounded-full bg-white/5" />
+        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+          <div className="flex-1 min-w-0">
+            <p className="text-blue-200 text-xs sm:text-sm font-medium mb-1">Dashboard</p>
+            <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-1 leading-snug">{greet(user?.name)}</h2>
+            <p className="text-blue-100 text-xs sm:text-sm capitalize">{role?.replace(/_/g, " ")} · Rue POS</p>
+          </div>
+          {!branchesLoading && branches?.length > 0 && (
+            <div className="flex items-center gap-2 bg-white/10 backdrop-blur rounded-xl px-3 py-2 self-start">
+              <span className="w-2 h-2 rounded-full bg-green-400" />
+              <span className="text-sm font-semibold text-white">{branches.length} branch{branches.length !== 1 ? "es" : ""}</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {isSuperAdmin && <SuperAdminStats />}
+      {isOrgLevel   && <OrgAdminStats orgId={orgId} />}
+
+      {showBranchGrid && (
+        <div>
+          <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Branch Overview</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+            {branchesLoading
+              ? Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="bg-white rounded-2xl border border-gray-100 shadow-sm h-44 animate-pulse" />
+                ))
+              : branches.map((branch) => <BranchCard key={branch.id} branch={branch} />)
+            }
+          </div>
         </div>
       )}
 
-      <div className="px-4 pt-4 pb-3">
-        <div className="flex items-start justify-between mb-1">
-          <p className="font-semibold text-gray-900 text-sm leading-tight pl-5">{item.name}</p>
-          <ActiveBadge active={item.is_active} />
-        </div>
-        {item.description && (
-          <p className="text-xs text-gray-400 mt-1 line-clamp-2 pl-5">{item.description}</p>
-        )}
-        <p className="text-sm font-bold text-blue-600 mt-3 font-mono">{fmtEGP(item.base_price)}</p>
-      </div>
-
-      <div className="px-4 pb-4 flex items-center gap-2">
-        <button
-          onClick={() => onConfigure(item.id)}
-          className="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 py-2 rounded-xl transition-colors"
-        >
-          <Settings size={12} /> Configure
-        </button>
-        <button
-          onClick={() => onEdit(item)}
-          className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-colors"
-        >
-          <Pencil size={14} />
-        </button>
-        <button
-          onClick={() => onDelete(item)}
-          className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors"
-        >
-          <Trash2 size={14} />
-        </button>
-      </div>
-    </div>
-  );
-}
-
-JS_EOF
-
-# ──────────────────────────────────────────────────────────────────────
-# pages/menu/components/items/ItemFormModal.jsx
-# ──────────────────────────────────────────────────────────────────────
-write 'pages/menu/components/items/ItemFormModal.jsx' << 'JS_EOF'
-import { useState, useRef } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Upload, X, ImageIcon, ExternalLink } from "lucide-react";
-import { createMenuItem, updateMenuItem, uploadMenuItemImage } from "../../../../api/menu";
-import { toEGP, toPiastres } from "../../constants";
-import Modal from "../shared/Modal";
-import Field from "../shared/Field";
-
-export default function ItemFormModal({ editing, categories, orgId, selCat, onClose }) {
-  const qc      = useQueryClient();
-  const fileRef = useRef(null);
-
-  const [form, setForm] = useState({
-    category_id:   editing?.category_id  ?? selCat ?? categories?.[0]?.id ?? "",
-    name:          editing?.name         ?? "",
-    description:   editing?.description  ?? "",
-    image_url:     editing?.image_url    ?? "",
-    base_price:    editing ? toEGP(editing.base_price) : "",
-    display_order: editing?.display_order ?? 0,
-    is_active:     editing?.is_active    ?? true,
-  });
-
-  const [error,          setError]          = useState("");
-  const [uploading,      setUploading]      = useState(false);
-  const [uploadError,    setUploadError]    = useState("");
-  const [showUrlInput,   setShowUrlInput]   = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
-
-  const createMutation = useMutation({
-    mutationFn: createMenuItem,
-    onSuccess: () => { qc.invalidateQueries(["menu-items", orgId]); onClose(); },
-    onError: (e) => setError(e.response?.data?.error || "Failed"),
-  });
-  const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => updateMenuItem(id, data),
-    onSuccess: () => { qc.invalidateQueries(["menu-items", orgId]); onClose(); },
-    onError: (e) => setError(e.response?.data?.error || "Failed"),
-  });
-
-  const isPending = createMutation.isPending || updateMutation.isPending;
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setError("");
-    const payload = {
-      ...form,
-      org_id:        orgId,
-      base_price:    toPiastres(form.base_price),
-      display_order: +form.display_order,
-    };
-    if (editing) updateMutation.mutate({ id: editing.id, data: payload });
-    else         createMutation.mutate(payload);
-  };
-
-  const handleFileChange = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Must have an editing item to upload (need the item ID)
-    if (!editing) {
-      setUploadError("Save the item first, then upload an image.");
-      return;
-    }
-
-    setUploading(true);
-    setUploadError("");
-    setUploadProgress(0);
-
-    try {
-      const res = await uploadMenuItemImage(editing.id, file);
-      const url = res.data?.image_url;
-      if (url) {
-        setForm((f) => ({ ...f, image_url: url }));
-        qc.invalidateQueries(["menu-items", orgId]);
-      }
-    } catch (e) {
-      setUploadError(e.response?.data?.error || "Upload failed");
-    } finally {
-      setUploading(false);
-      setUploadProgress(0);
-      if (fileRef.current) fileRef.current.value = "";
-    }
-  };
-
-  return (
-    <Modal title={editing ? "Edit Item" : "New Menu Item"} onClose={onClose}>
-      <form onSubmit={handleSubmit} className="p-6 space-y-4">
-
-        {/* Category */}
-        <div>
-          <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Category</label>
-          <select
-            value={form.category_id}
-            onChange={(e) => setForm((f) => ({ ...f, category_id: e.target.value }))}
-            required
-            className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-          >
-            <option value="">Select category...</option>
-            {categories?.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-          </select>
-        </div>
-
-        <Field label="Name"             value={form.name}          onChange={(v) => setForm((f) => ({ ...f, name: v }))}          placeholder="e.g. Iced Spanish Latte" required />
-        <Field label="Description"      value={form.description}   onChange={(v) => setForm((f) => ({ ...f, description: v }))}   placeholder="Optional" />
-        <Field label="Base Price (EGP)" value={form.base_price}    onChange={(v) => setForm((f) => ({ ...f, base_price: v }))}    type="number" placeholder="0.00" required />
-        <Field label="Display Order"    value={form.display_order} onChange={(v) => setForm((f) => ({ ...f, display_order: v }))} type="number" />
-
-        {/* Image section */}
-        <div>
-          <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Image</label>
-
-          {/* Preview */}
-          {form.image_url && (
-            <div className="relative mb-3 rounded-xl overflow-hidden border border-gray-200 bg-gray-50 h-32">
-              <img
-                src={form.image_url}
-                alt="preview"
-                className="w-full h-full object-cover"
-                onError={(e) => { e.currentTarget.style.display = "none"; }}
-              />
-              <button
-                type="button"
-                onClick={() => setForm((f) => ({ ...f, image_url: "" }))}
-                className="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/50 flex items-center justify-center text-white hover:bg-black/70 transition"
-              >
-                <X size={12} />
-              </button>
-            </div>
-          )}
-
-          {/* Upload button — only available when editing an existing item */}
-          {editing ? (
-            <div className="space-y-2">
-              <input
-                ref={fileRef}
-                type="file"
-                accept="image/jpeg,image/png,image/gif,image/webp,image/bmp"
-                onChange={handleFileChange}
-                className="hidden"
-              />
-              <button
-                type="button"
-                onClick={() => fileRef.current?.click()}
-                disabled={uploading}
-                className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-gray-200 rounded-xl py-3 text-sm font-medium text-gray-500 hover:border-blue-300 hover:text-blue-600 transition-colors disabled:opacity-50"
-              >
-                {uploading ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
-                    Uploading...
-                  </>
-                ) : (
-                  <>
-                    <Upload size={14} /> Upload Image
-                  </>
-                )}
-              </button>
-              {uploadError && (
-                <p className="text-xs text-red-500 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
-                  {uploadError}
-                </p>
-              )}
-            </div>
-          ) : (
-            <p className="text-xs text-gray-400 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2">
-              <ImageIcon size={12} className="inline mr-1" />
-              Create the item first, then upload an image by editing it.
-            </p>
-          )}
-
-          {/* Manual URL fallback */}
-          <button
-            type="button"
-            onClick={() => setShowUrlInput((v) => !v)}
-            className="mt-2 text-xs text-gray-400 hover:text-gray-600 flex items-center gap-1 transition-colors"
-          >
-            <ExternalLink size={11} />
-            {showUrlInput ? "Hide URL input" : "Or enter image URL manually"}
-          </button>
-          {showUrlInput && (
-            <input
-              type="url"
-              value={form.image_url}
-              onChange={(e) => setForm((f) => ({ ...f, image_url: e.target.value }))}
-              placeholder="https://..."
-              className="mt-2 w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          )}
-        </div>
-
-        {editing && (
-          <div className="flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-xl border border-gray-200">
-            <input
-              type="checkbox" id="item_active"
-              checked={form.is_active}
-              onChange={(e) => setForm((f) => ({ ...f, is_active: e.target.checked }))}
-              className="w-4 h-4 rounded accent-blue-600"
-            />
-            <label htmlFor="item_active" className="text-sm font-medium text-gray-700 cursor-pointer">Item is active</label>
+      {isOrgLevel && branches?.length > 0 && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+          <div className="space-y-4 sm:space-y-6">
+            <SalesSummary branches={branches} />
+            {branches.length > 1 && (
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                <div className="px-4 sm:px-6 py-3.5 border-b border-gray-100 flex items-center gap-2">
+                  <Clock size={14} className="text-blue-600" />
+                  <h3 className="font-semibold text-gray-900 text-sm">Branch Status</h3>
+                </div>
+                <div className="divide-y divide-gray-50">
+                  {branches.map((branch) => <BranchStatusRow key={branch.id} branch={branch} />)}
+                </div>
+              </div>
+            )}
           </div>
-        )}
-
-        {error && <p className="text-red-500 text-sm bg-red-50 border border-red-100 rounded-xl px-4 py-3">{error}</p>}
-
-        <div className="flex gap-3 pt-1">
-          <button type="button" onClick={onClose}
-            className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50 transition">
-            Cancel
-          </button>
-          <button type="submit" disabled={isPending}
-            className="flex-1 text-white font-semibold rounded-xl py-2.5 text-sm disabled:opacity-60 transition"
-            style={{ background: "linear-gradient(135deg, #1a56db, #3b28cc)" }}>
-            {isPending ? (editing ? "Saving..." : "Creating...") : (editing ? "Save Changes" : "Create")}
-          </button>
+          <div className="space-y-4 sm:space-y-6">
+            <RecentOrders branches={branches} />
+            <LowStockPanel branches={branches} />
+          </div>
         </div>
-      </form>
-    </Modal>
+      )}
+
+      {isSuperAdmin && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 sm:p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <TrendingUp size={15} className="text-blue-600" />
+              <h3 className="font-semibold text-gray-900">Quick Actions</h3>
+            </div>
+            <div className="space-y-2">
+              {[
+                { label: "Manage Organizations", to: "/orgs",    color: "bg-blue-50 text-blue-700 hover:bg-blue-100"       },
+                { label: "Manage Users",          to: "/users",   color: "bg-violet-50 text-violet-700 hover:bg-violet-100" },
+                { label: "View All Branches",     to: "/branches",color: "bg-amber-50 text-amber-700 hover:bg-amber-100"   },
+                { label: "Shifts & Reports",      to: "/shifts",  color: "bg-green-50 text-green-700 hover:bg-green-100"   },
+              ].map((a) => (
+                <Link key={a.label} to={a.to}
+                  className={`flex items-center justify-between px-4 py-3 rounded-xl font-medium text-sm transition-colors ${a.color}`}>
+                  {a.label}<ArrowRight size={14} />
+                </Link>
+              ))}
+            </div>
+          </div>
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 sm:p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <RefreshCw size={15} className="text-blue-600" />
+              <h3 className="font-semibold text-gray-900">System Status</h3>
+            </div>
+            {["API Server", "Database", "Auth Service"].map((s) => (
+              <div key={s} className="flex items-center justify-between py-2.5 border-b border-gray-50 last:border-0">
+                <span className="text-sm text-gray-600">{s}</span>
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                  <span className="text-xs font-medium text-green-600">Online</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
+ENDOFFILE
 
-JS_EOF
+echo "  ✓  Dashboard.jsx"
 
+# ─────────────────────────────────────────────────────────────────────────────
+#  4. Shifts.jsx  — replace tables with mobile cards, fix drawer width
+# ─────────────────────────────────────────────────────────────────────────────
+# Patch the ShiftRow component to stack on mobile and the drawer to be full-width
+# We use Python for targeted replacements since the file is large
+python3 - << 'PYEOF'
+import re, pathlib
 
-# =============================================================================
-#  TARGETED PATCHES (via embedded Python scripts)
-# =============================================================================
+p = pathlib.Path("src/pages/shifts/Shifts.jsx")
+src = p.read_text()
 
-PATCHES_DIR="$(dirname "$0")/dashboard_patches"
-mkdir -p "$PATCHES_DIR"
-
-# Write patch scripts inline
-
-cat > "$PATCHES_DIR/patch_recipes.py" << 'PY_EOF'
-import sys
-with open(sys.argv[1], "r") as f:
-    src = f.read()
-src = src.replace('from "../../store/auth"', 'from "../../store/auth.jsx"')
-src = src.replace("from '../../store/auth'", "from '../../store/auth.jsx'")
-with open(sys.argv[1], "w") as f:
-    f.write(src)
-print("  patched: Recipes auth import")
-
-PY_EOF
-
-cat > "$PATCHES_DIR/patch_inventory.py" << 'PY_EOF'
-import sys, re
-with open(sys.argv[1], "r") as f:
-    src = f.read()
-
-lines = [l for l in src.splitlines(keepends=True) if "console.log" not in l]
-src = "".join(lines)
-print("  patched: Inventory console.logs removed")
-
-old = "function SoftServeTab({ branchId, orgId }) {"
-new = """function SoftServeTab({ branchId, orgId }) {
-  if (!orgId) return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 text-center text-gray-400 text-sm">
-      No organization assigned to your account. Contact your administrator.
+# 1. ShiftRow — replace fixed grid with responsive card on mobile
+old_row = '''  return (
+    <div
+      onClick={onClick}
+      style={{
+        display: "grid",
+        gridTemplateColumns: "1fr 1fr 100px 130px 130px 110px 60px",
+        padding: "14px 20px",
+        background: even ? "#fff" : "#FAFAFA",
+        borderBottom: "1px solid #F5F5F5",
+        cursor: "pointer", transition: "background 0.12s",
+        alignItems: "center",
+      }}
+      onMouseEnter={(e) => (e.currentTarget.style.background = "#EFF6FF")}
+      onMouseLeave={(e) => (e.currentTarget.style.background = even ? "#fff" : "#FAFAFA")}
+    >
+      <span style={{ fontSize: 13, fontWeight: 600, color: "#111827" }}>{s.teller_name}</span>
+      <span style={{ fontSize: 12, color: "#6B7280" }}>{fmtDT(s.opened_at)}</span>
+      <span style={{ fontSize: 12, color: "#6B7280" }}>{dur(s.opened_at, s.closed_at)}</span>
+      <span style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>{egp(s.opening_cash)}</span>
+      <span style={{ fontSize: 13, fontWeight: 700, color: "#1a56db" }}>
+        {orders.length > 0 ? egp(totalSales) : "—"}
+      </span>
+      <Badge status={s.status} />
+      <span style={{ fontSize: 12, color: "#9CA3AF", textAlign: "right" }}>View →</span>
     </div>
-  );"""
-if old in src and "No organization assigned" not in src:
+  );'''
+
+new_row = '''  return (
+    <>
+      {/* Mobile card */}
+      <div
+        className="sm:hidden"
+        onClick={onClick}
+        style={{
+          padding: "14px 16px",
+          background: even ? "#fff" : "#FAFAFA",
+          borderBottom: "1px solid #F5F5F5",
+          cursor: "pointer",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+          <span style={{ fontSize: 14, fontWeight: 700, color: "#111827" }}>{s.teller_name}</span>
+          <Badge status={s.status} />
+        </div>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div>
+            <p style={{ fontSize: 11, color: "#9CA3AF", margin: 0 }}>{fmtDT(s.opened_at)}</p>
+            <p style={{ fontSize: 11, color: "#9CA3AF", margin: "2px 0 0" }}>Duration: {dur(s.opened_at, s.closed_at)}</p>
+          </div>
+          <div style={{ textAlign: "right" }}>
+            <p style={{ fontSize: 15, fontWeight: 800, color: "#1a56db", margin: 0 }}>{orders.length > 0 ? egp(totalSales) : "—"}</p>
+            <p style={{ fontSize: 11, color: "#9CA3AF", margin: "2px 0 0" }}>Opening: {egp(s.opening_cash)}</p>
+          </div>
+        </div>
+      </div>
+      {/* Desktop row */}
+      <div
+        className="hidden sm:grid"
+        onClick={onClick}
+        style={{
+          gridTemplateColumns: "1fr 1fr 100px 130px 130px 110px 60px",
+          padding: "14px 20px",
+          background: even ? "#fff" : "#FAFAFA",
+          borderBottom: "1px solid #F5F5F5",
+          cursor: "pointer", transition: "background 0.12s",
+          alignItems: "center",
+        }}
+        onMouseEnter={(e) => (e.currentTarget.style.background = "#EFF6FF")}
+        onMouseLeave={(e) => (e.currentTarget.style.background = even ? "#fff" : "#FAFAFA")}
+      >
+        <span style={{ fontSize: 13, fontWeight: 600, color: "#111827" }}>{s.teller_name}</span>
+        <span style={{ fontSize: 12, color: "#6B7280" }}>{fmtDT(s.opened_at)}</span>
+        <span style={{ fontSize: 12, color: "#6B7280" }}>{dur(s.opened_at, s.closed_at)}</span>
+        <span style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>{egp(s.opening_cash)}</span>
+        <span style={{ fontSize: 13, fontWeight: 700, color: "#1a56db" }}>
+          {orders.length > 0 ? egp(totalSales) : "—"}
+        </span>
+        <Badge status={s.status} />
+        <span style={{ fontSize: 12, color: "#9CA3AF", textAlign: "right" }}>View →</span>
+      </div>
+    </>
+  );'''
+
+src = src.replace(old_row, new_row)
+
+# 2. Shift list header — hide on mobile
+old_header = '''        <Card>
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr 100px 130px 130px 110px 60px",
+            padding: "10px 20px",
+            background: "#F9FAFB", borderBottom: "1px solid #F0F0F0",
+          }}>
+            {["Teller", "Opened", "Duration", "Opening Cash", "Total Sales", "Status", ""].map((h) => (
+              <span key={h} style={{
+                fontSize: 11, fontWeight: 700, color: "#9CA3AF",
+                letterSpacing: 0.4, textTransform: "uppercase",
+              }}>
+                {h}
+              </span>
+            ))}
+          </div>
+          {shifts.map((s, i) => (
+            <ShiftRow key={s.id} s={s} even={i % 2 === 0} onClick={() => setSelectedShift(s)} />
+          ))}
+        </Card>'''
+
+new_header = '''        <Card>
+          <div className="hidden sm:grid" style={{
+            gridTemplateColumns: "1fr 1fr 100px 130px 130px 110px 60px",
+            padding: "10px 20px",
+            background: "#F9FAFB", borderBottom: "1px solid #F0F0F0",
+          }}>
+            {["Teller", "Opened", "Duration", "Opening Cash", "Total Sales", "Status", ""].map((h) => (
+              <span key={h} style={{
+                fontSize: 11, fontWeight: 700, color: "#9CA3AF",
+                letterSpacing: 0.4, textTransform: "uppercase",
+              }}>
+                {h}
+              </span>
+            ))}
+          </div>
+          {shifts.map((s, i) => (
+            <ShiftRow key={s.id} s={s} even={i % 2 === 0} onClick={() => setSelectedShift(s)} />
+          ))}
+        </Card>'''
+
+src = src.replace(old_header, new_header)
+
+# 3. ShiftDetail drawer — make full-width on mobile
+old_drawer = '''        width: "min(820px, 96vw)",'''
+new_drawer = '''        width: "min(820px, 100vw)",'''
+src = src.replace(old_drawer, new_drawer)
+
+# 4. ShiftDetail header actions — wrap on mobile
+old_actions = '''          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>'''
+new_actions = '''          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "flex-end", maxWidth: "60vw" }}>'''
+src = src.replace(old_actions, new_actions)
+
+# 5. Stats grid in detail — single col on mobile
+old_stats_grid = '''          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(150px,1fr))", gap: 12 }}>'''
+new_stats_grid = '''          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(130px,1fr))", gap: 10 }}>'''
+src = src.replace(old_stats_grid, new_stats_grid)
+
+# 6. Main page padding
+old_main = '''    <div style={{ padding: 28, maxWidth: 1100, margin: "0 auto" }}>'''
+new_main = '''    <div style={{ padding: "16px", maxWidth: 1100, margin: "0 auto" }} className="sm:p-7">'''
+src = src.replace(old_main, new_main)
+
+# 7. Shift detail inner grid — single col on mobile
+old_detail_grid = '''              {[
+                ["Teller",             shift.teller_name],
+                ["Opened At",          fmtDT(shift.opened_at)],'''
+new_detail_grid = '''              {/* Details grid — 1 col on mobile, 2 on desktop */}
+              {[
+                ["Teller",             shift.teller_name],
+                ["Opened At",          fmtDT(shift.opened_at)],'''
+src = src.replace(old_detail_grid, new_detail_grid)
+
+old_detail_grid_style = '''            <div style={{ padding: 20, display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px 24px" }}>'''
+new_detail_grid_style = '''            <div style={{ padding: 16, display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(200px,1fr))", gap: "10px 24px" }}>'''
+src = src.replace(old_detail_grid_style, new_detail_grid_style)
+
+p.write_text(src)
+print("  patched Shifts.jsx")
+PYEOF
+
+echo "  ✓  Shifts.jsx (mobile cards + responsive drawer)"
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  5. Recipes.jsx  — split panel stacks vertically on mobile
+# ─────────────────────────────────────────────────────────────────────────────
+python3 - << 'PYEOF'
+import pathlib
+
+p = pathlib.Path("src/pages/recipes/Recipes.jsx")
+src = p.read_text()
+
+# Replace the root layout div to stack on mobile
+old_root = '''    <div style={{ display: "flex", height: "calc(100vh - 60px)", overflow: "hidden", background: "#F9FAFB" }}>
+
+      {/* ── Left panel ─────────────────────────────────────── */}
+      <div style={{
+        width: 260,
+        flexShrink: 0,
+        background: "#fff",
+        borderRight: "1px solid #F0F0F0",
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+      }}>'''
+
+new_root = '''    <div className="flex flex-col lg:flex-row" style={{ height: "calc(100vh - 56px)", overflow: "hidden", background: "#F9FAFB" }}>
+
+      {/* ── Left panel ─────────────────────────────────────── */}
+      <div className="flex-shrink-0 lg:w-64" style={{
+        background: "#fff",
+        borderBottom: "1px solid #F0F0F0",
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+        maxHeight: "40vh",
+      }} style2="lg:maxHeight:none lg:borderBottom:none lg:borderRight:1px solid #F0F0F0">'''
+
+src = src.replace(old_root, new_root)
+
+# Simpler fix: use className for responsive layout
+old_root2 = '''    <div style={{ display: "flex", height: "calc(100vh - 60px)", overflow: "hidden", background: "#F9FAFB" }}>
+
+      {/* ── Left panel ─────────────────────────────────────── */}
+      <div style={{
+        width: 260,
+        flexShrink: 0,
+        background: "#fff",
+        borderRight: "1px solid #F0F0F0",
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+      }}>'''
+
+# Try direct replacement
+src2 = p.read_text()
+src2 = src2.replace(
+    '    <div style={{ display: "flex", height: "calc(100vh - 60px)", overflow: "hidden", background: "#F9FAFB" }}>',
+    '    <div className="flex flex-col lg:flex-row" style={{ height: "calc(100dvh - 56px)", overflow: "hidden", background: "#F9FAFB" }}>'
+)
+src2 = src2.replace(
+    '''      <div style={{
+        width: 260,
+        flexShrink: 0,
+        background: "#fff",
+        borderRight: "1px solid #F0F0F0",
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+      }}>''',
+    '''      <div className="lg:w-64 flex-shrink-0" style={{
+        background: "#fff",
+        borderBottom: "1px solid #F0F0F0",
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+        maxHeight: "40dvh",
+      }}>\n      {/* On desktop: sidebar; on mobile: horizontal-scroll list at top */}'''
+)
+# Remove lg:borderRight hack — just add it as a className override
+src2 = src2.replace(
+    '      {/* On desktop: sidebar; on mobile: horizontal-scroll list at top */}',
+    ''
+)
+
+# Right panel
+src2 = src2.replace(
+    '      <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden" }}>',
+    '      <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden", minHeight: 0 }}>'
+)
+
+p.write_text(src2)
+print("  patched Recipes.jsx")
+PYEOF
+
+echo "  ✓  Recipes.jsx (stacked on mobile)"
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  6. Inventory.jsx  — tab bar scrollable on mobile, tables responsive
+# ─────────────────────────────────────────────────────────────────────────────
+python3 - << 'PYEOF'
+import pathlib
+
+p = pathlib.Path("src/pages/inventory/Inventory.jsx")
+src = p.read_text()
+
+# Make tab bar horizontally scrollable on mobile
+src = src.replace(
+    '          <div className="flex items-center gap-1 bg-gray-100 rounded-xl p-1">',
+    '          <div className="flex items-center gap-1 bg-gray-100 rounded-xl p-1 overflow-x-auto">'
+)
+
+# Make header flex wrap properly
+src = src.replace(
+    '      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-6 py-4 flex flex-col sm:flex-row sm:items-center gap-4">',
+    '      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-4 sm:px-6 py-4 flex flex-col gap-3">'
+)
+
+# Table wrapper — ensure overflow scroll
+src = src.replace(
+    '          <div className="overflow-x-auto">',
+    '          <div className="overflow-x-auto -webkit-overflow-scrolling-touch">',
+    1  # first occurrence only
+)
+
+# Add min-width to tables so they scroll rather than squish
+src = src.replace(
+    '            <table className="w-full text-sm">',
+    '            <table className="w-full text-sm" style={{ minWidth: 520 }}>',
+    1
+)
+
+# Padding fix on mobile
+src = src.replace(
+    '    <div className="p-6 lg:p-8 space-y-6">',
+    '    <div className="p-3 sm:p-6 lg:p-8 space-y-4 sm:space-y-6">'
+)
+
+p.write_text(src)
+print("  patched Inventory.jsx")
+PYEOF
+
+echo "  ✓  Inventory.jsx"
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  7. Menu pages — sidebar collapses on mobile, category bar scrolls
+# ─────────────────────────────────────────────────────────────────────────────
+python3 - << 'PYEOF'
+import pathlib
+
+p = pathlib.Path("src/pages/menu/components/items/MenuItemsTab.jsx")
+src = p.read_text()
+
+# Category sidebar: hide on mobile, show as horizontal scroll bar instead
+old_layout = '''      <div className="flex gap-6">
+        {/* Category sidebar */}
+        <div className="w-52 flex-shrink-0 space-y-1.5">'''
+
+new_layout = '''      {/* Mobile: horizontal category scroll */}
+      <div className="flex sm:hidden gap-2 overflow-x-auto pb-1 px-0.5 -mx-0.5">
+        <button
+          onClick={() => setSelCat(null)}
+          className={`flex-shrink-0 px-3 py-2 rounded-xl text-xs font-semibold transition-all
+            ${!selCat ? "bg-white shadow border border-gray-200 text-gray-900" : "bg-gray-100 text-gray-500"}`}
+        >All</button>
+        {categories?.map((cat) => (
+          <button key={cat.id} onClick={() => setSelCat(cat.id)}
+            className={`flex-shrink-0 px-3 py-2 rounded-xl text-xs font-semibold transition-all
+              ${selCat === cat.id ? "bg-white shadow border border-gray-200 text-gray-900" : "bg-gray-100 text-gray-500"}`}>
+            {cat.name}
+          </button>
+        ))}
+      </div>
+
+      <div className="flex gap-6">
+        {/* Category sidebar — desktop only */}
+        <div className="hidden sm:block w-52 flex-shrink-0 space-y-1.5">'''
+
+src = src.replace(old_layout, new_layout)
+
+# Close the hidden div properly after the sidebar
+src = src.replace(
+    '''        {/* Items panel */}
+        <div className="flex-1 min-w-0">''',
+    '''        </div>{/* end desktop sidebar */}
+        {/* Items panel */}
+        <div className="flex-1 min-w-0">'''
+)
+
+# Remove duplicate close on the flex container
+src = src.replace(
+    '''      </div>
+
+      {/* Modals / Drawer */}''',
+    '''      </div>{/* end flex gap-6 */}
+
+      {/* Modals / Drawer */}'''
+)
+
+# Items grid — 1 col on mobile
+src = src.replace(
+    '              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 p-6">',
+    '              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 p-3 sm:p-6">'
+)
+
+p.write_text(src)
+print("  patched MenuItemsTab.jsx")
+PYEOF
+
+python3 - << 'PYEOF'
+import pathlib
+
+# ConfigureDrawer — full width on mobile
+p = pathlib.Path("src/pages/menu/components/items/ConfigureDrawer.jsx")
+src = p.read_text()
+src = src.replace(
+    '      <div className="fixed right-0 top-0 bottom-0 w-full max-w-lg bg-white shadow-2xl z-50 flex flex-col">',
+    '      <div className="fixed right-0 top-0 bottom-0 w-full sm:max-w-lg bg-white shadow-2xl z-50 flex flex-col">'
+)
+p.write_text(src)
+print("  patched ConfigureDrawer.jsx")
+PYEOF
+
+echo "  ✓  Menu components"
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  8. Branches.jsx, Users.jsx, Orgs.jsx, Permissions.jsx
+#     — tables scroll, modals fit iPhone, header wraps
+# ─────────────────────────────────────────────────────────────────────────────
+python3 - << 'PYEOF'
+import pathlib, re
+
+FILES = [
+    "src/pages/branches/Branches.jsx",
+    "src/pages/users/Users.jsx",
+    "src/pages/orgs/Orgs.jsx",
+    "src/pages/permissions/Permissions.jsx",
+]
+
+REPLACEMENTS = [
+    # Page padding
+    ('className="p-6 lg:p-8 space-y-6"',         'className="p-3 sm:p-6 lg:p-8 space-y-4 sm:space-y-6"'),
+    ('className="p-6 lg:p-8 space-y-4"',         'className="p-3 sm:p-6 lg:p-8 space-y-4 sm:space-y-6"'),
+    # Table overflow already present for most — ensure touch scrolling
+    ('className="overflow-x-auto"',               'className="overflow-x-auto"'),
+    # Modal max height for small phones
+    ('max-h-[90vh] overflow-y-auto',             'max-h-[92dvh] overflow-y-auto'),
+    # Header bar padding
+    ('className="bg-white rounded-2xl border border-gray-100 shadow-sm px-6 py-4 flex flex-col sm:flex-row sm:items-center gap-4"',
+     'className="bg-white rounded-2xl border border-gray-100 shadow-sm px-4 sm:px-6 py-4 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4"'),
+    # Search width
+    ('className="border border-gray-200 rounded-xl pl-8 pr-4 py-2 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 w-44"',
+     'className="border border-gray-200 rounded-xl pl-8 pr-4 py-2 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 w-36 sm:w-44"'),
+]
+
+for fpath in FILES:
+    p = pathlib.Path(fpath)
+    if not p.exists():
+        print(f"  skip {fpath} (not found)")
+        continue
+    src = p.read_text()
+    for old, new in REPLACEMENTS:
+        src = src.replace(old, new)
+    p.write_text(src)
+    print(f"  patched {fpath}")
+PYEOF
+
+echo "  ✓  Branches / Users / Orgs / Permissions"
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  9. Permissions.jsx  — resource cards single-col on mobile
+# ─────────────────────────────────────────────────────────────────────────────
+python3 - << 'PYEOF'
+import pathlib
+
+p = pathlib.Path("src/pages/permissions/Permissions.jsx")
+src = p.read_text()
+
+# Grid: 1 col on mobile, 2 on lg
+src = src.replace(
+    '      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">',
+    '      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">'
+)
+
+# Action toggles inside card: 1 col on small phones
+src = src.replace(
+    '              <div className="px-5 py-4 grid grid-cols-2 gap-3">',
+    '              <div className="px-3 sm:px-5 py-3 sm:py-4 grid grid-cols-2 gap-2 sm:gap-3">'
+)
+
+# Card header padding
+src = src.replace(
+    '              <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-50">',
+    '              <div className="flex items-center justify-between px-3 sm:px-5 py-3 border-b border-gray-50">'
+)
+
+p.write_text(src)
+print("  patched Permissions.jsx")
+PYEOF
+
+echo "  ✓  Permissions.jsx"
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  10. Login.jsx  — already decent, but tighten mobile padding
+# ─────────────────────────────────────────────────────────────────────────────
+python3 - << 'PYEOF'
+import pathlib
+
+p = pathlib.Path("src/pages/auth/Login.jsx")
+src = p.read_text()
+
+src = src.replace(
+    'className="flex-1 flex flex-col items-center justify-center bg-gray-50 px-6 py-12"',
+    'className="flex-1 flex flex-col items-center justify-center bg-gray-50 px-4 sm:px-6 py-8 sm:py-12"'
+)
+
+src = src.replace(
+    'className="w-full max-w-sm"',
+    'className="w-full max-w-sm px-1 sm:px-0"'
+)
+
+src = src.replace(
+    'className="bg-white rounded-2xl shadow-xl shadow-gray-200/60 p-8 border border-gray-100"',
+    'className="bg-white rounded-2xl shadow-xl shadow-gray-200/60 p-6 sm:p-8 border border-gray-100"'
+)
+
+p.write_text(src)
+print("  patched Login.jsx")
+PYEOF
+
+echo "  ✓  Login.jsx"
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  11. Sidebar.jsx  — fix hamburger button not overlapping content
+# ─────────────────────────────────────────────────────────────────────────────
+python3 - << 'PYEOF'
+import pathlib
+
+p = pathlib.Path("src/components/Sidebar.jsx")
+src = p.read_text()
+
+# Make toggle button bigger touch target on mobile
+src = src.replace(
+    '''          width: 36,
+            height: 36,''',
+    '''          width: 40,
+            height: 40,'''
+)
+
+# Ensure drawer is full-height including safe area
+src = src.replace(
+    '''            position: "fixed",
+            left: 0,
+            top: 0,
+            bottom: 0,
+            zIndex: 50,
+            width: 272,''',
+    '''            position: "fixed",
+            left: 0,
+            top: 0,
+            bottom: 0,
+            zIndex: 50,
+            width: "min(272px, 85vw)",'''
+)
+
+p.write_text(src)
+print("  patched Sidebar.jsx")
+PYEOF
+
+echo "  ✓  Sidebar.jsx"
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  12. BulkActionBar.jsx  — shrink on mobile
+# ─────────────────────────────────────────────────────────────────────────────
+python3 - << 'PYEOF'
+import pathlib
+
+p = pathlib.Path("src/pages/menu/components/shared/BulkActionBar.jsx")
+src = p.read_text()
+
+src = src.replace(
+    '    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">',
+    '    <div className="fixed bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-50 w-[calc(100vw-2rem)] sm:w-auto">'
+)
+
+src = src.replace(
+    '      <div className="flex items-center gap-2 bg-gray-900 text-white rounded-2xl shadow-2xl px-4 py-3">',
+    '      <div className="flex items-center gap-1.5 sm:gap-2 bg-gray-900 text-white rounded-2xl shadow-2xl px-3 sm:px-4 py-3 justify-between sm:justify-start">'
+)
+
+p.write_text(src)
+print("  patched BulkActionBar.jsx")
+PYEOF
+
+echo "  ✓  BulkActionBar.jsx"
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  13. Add viewport meta to index.html if not already there
+# ─────────────────────────────────────────────────────────────────────────────
+if [ -f "index.html" ]; then
+  if ! grep -q "viewport-fit=cover" index.html; then
+    python3 - << 'PYEOF'
+import pathlib, re
+p = pathlib.Path("index.html")
+src = p.read_text()
+old = '<meta name="viewport" content="width=device-width, initial-scale=1.0" />'
+new = '<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />'
+if old in src:
     src = src.replace(old, new)
-    print("  patched: SoftServeTab orgId guard")
+    p.write_text(src)
+    print("  updated viewport meta in index.html")
+elif 'viewport' not in src:
+    src = src.replace('<head>', '<head>\n    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />')
+    p.write_text(src)
+    print("  added viewport meta to index.html")
+PYEOF
+  fi
+fi
 
-with open(sys.argv[1], "w") as f:
-    f.write(src)
-
-PY_EOF
-
-cat > "$PATCHES_DIR/patch_branches.py" << 'PY_EOF'
-import sys
-with open(sys.argv[1], "r") as f:
-    src = f.read()
-
-old1 = "      printer_ip:   branch.printer_ip || \"\",\n      printer_port: branch.printer_port || 9100,\n    });"
-new1 = "      printer_ip:   branch.printer_ip || \"\",\n      printer_port: branch.printer_port || 9100,\n      is_active:    branch.is_active ?? true,\n    });"
-if old1 in src:
-    src = src.replace(old1, new1)
-    print("  patched: Branches is_active in openEdit")
-
-old2 = "    const payload = {"
-new2 = """    // Validate printer IP
-    if (form.printer_ip) {
-      const ipRe = /^(\\d{1,3}\\.){3}\\d{1,3}$/;
-      if (!ipRe.test(form.printer_ip)) { setError("Invalid printer IP format"); return; }
-      if (form.printer_ip.split(".").some((o) => parseInt(o) > 255)) { setError("Invalid printer IP (octet > 255)"); return; }
-    }
-    const payload = {"""
-if old2 in src and "Invalid printer IP" not in src:
-    src = src.replace(old2, new2, 1)
-    print("  patched: Branches IP validation")
-
-with open(sys.argv[1], "w") as f:
-    f.write(src)
-
-PY_EOF
-
-cat > "$PATCHES_DIR/patch_users.py" << 'PY_EOF'
-import sys
-with open(sys.argv[1], "r") as f:
-    src = f.read()
-
-if "is_active: u.is_active," not in src:
-    old = "      branch_ids: [],\n    });"
-    new = "      branch_ids: [],\n      is_active: u.is_active,\n    });"
-    if old in src:
-        src = src.replace(old, new, 1)
-        print("  patched: Users is_active in openEdit")
-
-old_sw = "    Promise.all(promises).then(() => {\n      assignMutation.mutate({ userId: editing.id, branchId });\n    });"
-new_sw = "    Promise.all(promises)\n      .then(() => { assignMutation.mutate({ userId: editing.id, branchId }); })\n      .catch((e) => { setError(\"Failed to switch branch: \" + (e?.response?.data?.error || e.message)); });"
-if old_sw in src:
-    src = src.replace(old_sw, new_sw)
-    print("  patched: Users switchEditBranch error handling")
-
-with open(sys.argv[1], "w") as f:
-    f.write(src)
-
-PY_EOF
-
-cat > "$PATCHES_DIR/patch_shifts.py" << 'PY_EOF'
-import sys, re
-with open(sys.argv[1], "r") as f:
-    src = f.read()
-
-old_q = """  const { data: branches = [] } = useQuery({
-    queryKey: ["branches", orgId],
-    queryFn:  () => getBranches(orgId).then((r) => r.data),
-    enabled:  !!orgId,
-    onSuccess: (data) => { if (data.length && !branchId) setBranchId(data[0].id); },
-  });"""
-new_q = """  const { data: branches = [] } = useQuery({
-    queryKey: ["branches", orgId],
-    queryFn:  () => getBranches(orgId).then((r) => r.data),
-    enabled:  !!orgId,
-  });
-  React.useEffect(() => {
-    if (branches.length && !branchId) setBranchId(branches[0].id);
-  }, [branches]);"""
-if old_q in src:
-    src = src.replace(old_q, new_q)
-    print("  patched: Shifts onSuccess → useEffect")
-
-if "import React" not in src:
-    src = "import React from \"react\";\n" + src
-    print("  patched: Shifts React import added")
-
-old_fc = """            {shift.status === "open" && <>
-              <Btn variant="ghost" onClick={() => setShowCash(true)} style={{ fontSize: 12 }}>
-                + Cash Movement
-              </Btn>
-              <Btn variant="danger" onClick={() => setShowForce(true)} style={{ fontSize: 12 }}>
-                Force Close
-              </Btn>
-            </>}"""
-new_fc = """            {shift.status === "open" && <>
-              <Btn variant="ghost" onClick={() => setShowCash(true)} style={{ fontSize: 12 }}>
-                + Cash Movement
-              </Btn>
-              {user?.role !== "teller" && (
-                <Btn variant="danger" onClick={() => setShowForce(true)} style={{ fontSize: 12 }}>
-                  Force Close
-                </Btn>
-              )}
-            </>}"""
-if old_fc in src:
-    src = src.replace(old_fc, new_fc)
-    print("  patched: Shifts Force Close hidden from tellers")
-
-old_sd = "function ShiftDetail({ shift, branchName, onClose }) {"
-new_sd = "function ShiftDetail({ shift, branchName, onClose }) {\n  const { user } = useAuth();"
-if old_sd in src and "const { user } = useAuth();" not in src:
-    src = src.replace(old_sd, new_sd, 1)
-    print("  patched: Shifts ShiftDetail gets user")
-
-with open(sys.argv[1], "w") as f:
-    f.write(src)
-
-PY_EOF
-
-cat > "$PATCHES_DIR/patch_dashboard.py" << 'PY_EOF'
-import sys, re
-with open(sys.argv[1], "r") as f:
-    src = f.read()
-
-# Move React import to top
-src = re.sub(r"\nimport React from \"react\";\n", "\n", src)
-if "import React from \"react\";" not in src[:50]:
-    src = "import React from \"react\";\n" + src
-    print("  patched: Dashboard React import at top")
-
-src = src.replace(
-    "instapay:       \"bg-purple-50 text-purple-700\"",
-    "digital_wallet: \"bg-purple-50 text-purple-700\""
-)
-print("  patched: Dashboard instapay → digital_wallet")
-
-src = src.replace(
-    "queryKey: [\"recent-orders-branch-scan\", branches?.map((b) => b.id)]",
-    "queryKey: [\"recent-orders-branch-scan\", branches?.map((b) => b.id).join(\",\")]"
-)
-print("  patched: Dashboard queryKey stable")
-
-old_dup = "    { icon: GitBranch, label: \"Organizations\", value: orgs?.length,  sub: `${orgs?.filter(o => o.is_active).length ?? 0} active`, color: \"text-amber-600\", bg: \"bg-amber-50\", border: \"border-amber-100\",  loading: orgsLoading },"
-new_dup = "    { icon: Users,     label: \"Active Staff\",  value: users?.filter(u => u.is_active).length, sub: \"Active accounts\", color: \"text-amber-600\", bg: \"bg-amber-50\", border: \"border-amber-100\", loading: usersLoading },"
-if old_dup in src:
-    src = src.replace(old_dup, new_dup)
-    print("  patched: Dashboard dup stat → Active Staff")
-
-src = re.sub(
-    r"\n\s*// We'll use a single aggregated query approach\n\s*const queries = \(branches \?\? \[\]\)\.map\(\(b\) => \(\{.*?\}\)\);\n",
-    "\n",
-    src, flags=re.DOTALL
-)
-print("  patched: Dashboard dead queries variable removed")
-
-with open(sys.argv[1], "w") as f:
-    f.write(src)
-
-PY_EOF
-
-run_patch() {
-    local script="$1" target="$SRC/$2"
-    if [ -f "$target" ]; then
-        python3 "$PATCHES_DIR/$script" "$target"
-    else
-        echo "  SKIP (not found): $2"
-    fi
-}
-
-run_patch "patch_recipes.py"   "pages/recipes/Recipes.jsx"
-run_patch "patch_inventory.py" "pages/inventory/Inventory.jsx"
-run_patch "patch_branches.py"  "pages/branches/Branches.jsx"
-run_patch "patch_users.py"     "pages/users/Users.jsx"
-run_patch "patch_shifts.py"    "pages/shifts/Shifts.jsx"
-run_patch "patch_dashboard.py" "pages/Dashboard.jsx"
+echo "  ✓  index.html viewport"
 
 echo ""
-echo "========================================"
-echo "  Dashboard fixes applied!"
-echo "========================================"
+echo "✅  Responsive rewrite complete!"
 echo ""
-echo "Full rewrites:"
-echo "  App.css, api/client.js (timeout), api/menu.js (upload),"
-echo "  Layout.jsx (titles), ItemCard.jsx (thumbnail), ItemFormModal.jsx (upload widget)"
+echo "Key changes:"
+echo "  • All pages: 4px mobile padding, fluid grids, touch targets"
+echo "  • Shifts: desktop table + mobile card view per row"
+echo "  • Recipes: stacked panel on mobile (40/60 split)"
+echo "  • Inventory: horizontally scrollable tab bar + tables"
+echo "  • Menu: horizontal category scroll bar on mobile"
+echo "  • Permissions: 1-col resource cards on mobile"
+echo "  • Sidebar: drawer is min(272px, 85vw) — never clips on iPhone"
+echo "  • Modals: max-h uses dvh units so keyboard doesn't clip them"
+echo "  • index.html: viewport-fit=cover for iPhone notch"
 echo ""
-echo "Patches applied:"
-echo "  Dashboard.jsx  — React import, instapay, queryKey, dup stat, dead code"
-echo "  Branches.jsx   — is_active openEdit, IP validation"
-echo "  Users.jsx      — is_active openEdit, switchEditBranch error handling"
-echo "  Inventory.jsx  — console.logs, SoftServeTab orgId guard"
-echo "  Shifts.jsx     — onSuccess→useEffect, Force Close role guard"
-echo "  Recipes.jsx    — auth import extension"
-echo ""
+echo "Run: npm run dev  and test on iPhone."
+ENDOFFILE
+
+echo "  Script written."

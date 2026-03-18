@@ -137,7 +137,7 @@ export default function Permissions() {
   );
 
   return (
-    <div className="p-6 lg:p-8 space-y-6">
+    <div className="p-3 sm:p-6 lg:p-8 space-y-4 sm:space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
         <button onClick={() => navigate("/users")}
@@ -191,13 +191,13 @@ export default function Permissions() {
       </div>
 
       {/* Resource cards */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
         {RESOURCES.map(({ key, label, icon }) => {
           const summary = getResourceSummary(key);
           return (
             <div key={key} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
               {/* Card header */}
-              <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-50">
+              <div className="flex items-center justify-between px-3 sm:px-5 py-3 border-b border-gray-50">
                 <div className="flex items-center gap-2.5">
                   <span className="text-lg">{icon}</span>
                   <p className="font-semibold text-gray-800 text-sm">{label}</p>
@@ -218,7 +218,7 @@ export default function Permissions() {
               </div>
 
               {/* Action toggles */}
-              <div className="px-5 py-4 grid grid-cols-2 gap-3">
+              <div className="px-3 sm:px-5 py-3 sm:py-4 grid grid-cols-2 gap-2 sm:gap-3">
                 {ACTIONS.map(action => {
                   const cell      = getCell(key, action);
                   const effective = cell?.effective ?? false;

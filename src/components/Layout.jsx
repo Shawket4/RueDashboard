@@ -22,21 +22,21 @@ export default function Layout() {
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
       <Sidebar />
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         <header className="bg-white border-b border-gray-100 shadow-sm flex-shrink-0">
-          <div className="flex items-center px-6 lg:px-8 h-16">
-            <div className="lg:hidden w-8" />
-            <div>
-              <h1 className="text-lg font-bold text-gray-900 leading-none">{meta.title}</h1>
-              {meta.sub && <p className="text-gray-400 text-xs mt-0.5">{meta.sub}</p>}
+          <div className="flex items-center px-4 lg:px-8 h-14 lg:h-16 gap-3">
+            {/* Space for mobile hamburger button (rendered inside Sidebar) */}
+            <div className="w-10 lg:hidden flex-shrink-0" />
+            <div className="min-w-0">
+              <h1 className="text-base lg:text-lg font-bold text-gray-900 leading-none truncate">{meta.title}</h1>
+              {meta.sub && <p className="text-gray-400 text-xs mt-0.5 truncate hidden sm:block">{meta.sub}</p>}
             </div>
           </div>
         </header>
-        <main className="flex-1 overflow-y-auto">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden">
           <Outlet />
         </main>
       </div>
     </div>
   );
 }
-

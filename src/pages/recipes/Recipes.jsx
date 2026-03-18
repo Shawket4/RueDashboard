@@ -816,18 +816,18 @@ export default function Recipes() {
   const loading = tab === "drinks" ? loadingMenu : loadingAddons;
 
   return (
-    <div style={{ display: "flex", height: "calc(100vh - 60px)", overflow: "hidden", background: "#F9FAFB" }}>
+    <div className="flex flex-col lg:flex-row" style={{ height: "calc(100dvh - 56px)", overflow: "hidden", background: "#F9FAFB" }}>
 
       {/* ── Left panel ─────────────────────────────────────── */}
-      <div style={{
-        width: 260,
-        flexShrink: 0,
+      <div className="lg:w-64 flex-shrink-0" style={{
         background: "#fff",
-        borderRight: "1px solid #F0F0F0",
+        borderBottom: "1px solid #F0F0F0",
         display: "flex",
         flexDirection: "column",
         overflow: "hidden",
+        maxHeight: "40dvh",
       }}>
+
         {/* Tab switcher */}
         <div style={{ padding: "12px 12px 0", display: "flex", gap: 6 }}>
           {["drinks", "addons"].map((t) => (
@@ -864,7 +864,7 @@ export default function Recipes() {
       </div>
 
       {/* ── Right panel ────────────────────────────────────── */}
-      <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden" }}>
+      <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden", minHeight: 0 }}>
         {!selected ? (
           <div style={{
             height: "100%",

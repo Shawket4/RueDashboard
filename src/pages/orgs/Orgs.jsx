@@ -31,9 +31,9 @@ export default function Orgs() {
   ) ?? [];
 
   return (
-    <div className="p-6 lg:p-8 space-y-6">
+    <div className="p-3 sm:p-6 lg:p-8 space-y-4 sm:space-y-6">
       {/* Header bar */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-6 py-4 flex flex-col sm:flex-row sm:items-center gap-4">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-4 sm:px-6 py-4 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
         <div className="flex-1">
           <h2 className="font-bold text-gray-900">All Organizations</h2>
           <p className="text-gray-400 text-xs mt-0.5">{data?.length ?? 0} total</p>

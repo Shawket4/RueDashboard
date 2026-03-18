@@ -657,7 +657,7 @@ function ShiftDetail({ shift, branchName, onClose }) {
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div style={{
-        width: "min(820px, 96vw)",
+        width: "min(820px, 100vw)",
         background: "#F9FAFB",
         boxShadow: "-8px 0 40px rgba(0,0,0,0.15)",
         display: "flex", flexDirection: "column",
@@ -687,7 +687,7 @@ function ShiftDetail({ shift, branchName, onClose }) {
               {branchName}  ·  {dur(shift.opened_at, shift.closed_at)}
             </p>
           </div>
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "flex-end", maxWidth: "60vw" }}>
             {shift.status === "open" && <>
               <Btn variant="ghost" onClick={() => setShowCash(true)} style={{ fontSize: 12 }}>
                 + Cash Movement
@@ -712,7 +712,7 @@ function ShiftDetail({ shift, branchName, onClose }) {
         <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 20 }}>
 
           {/* Stats */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(150px,1fr))", gap: 12 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(130px,1fr))", gap: 10 }}>
             <StatCard label="Total Sales"  value={egp(totalSales)}         accent="#1a56db" />
             <StatCard label="Orders"       value={valid.length}             accent="#059669" />
             <StatCard label="Cash Sales"   value={egp(cashSales)}           accent="#D97706" />
@@ -729,7 +729,8 @@ function ShiftDetail({ shift, branchName, onClose }) {
           {/* Shift details */}
           <Card>
             <CardHeader title="Shift Details" />
-            <div style={{ padding: 20, display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px 24px" }}>
+            <div style={{ padding: 16, display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(200px,1fr))", gap: "10px 24px" }}>
+              {/* Details grid — 1 col on mobile, 2 on desktop */}
               {[
                 ["Teller",             shift.teller_name],
                 ["Opened At",          fmtDT(shift.opened_at)],
@@ -895,30 +896,59 @@ function ShiftRow({ s, even, onClick }) {
     .reduce((sum, o) => sum + (o.total_amount || 0), 0);
 
   return (
-    <div
-      onClick={onClick}
-      style={{
-        display: "grid",
-        gridTemplateColumns: "1fr 1fr 100px 130px 130px 110px 60px",
-        padding: "14px 20px",
-        background: even ? "#fff" : "#FAFAFA",
-        borderBottom: "1px solid #F5F5F5",
-        cursor: "pointer", transition: "background 0.12s",
-        alignItems: "center",
-      }}
-      onMouseEnter={(e) => (e.currentTarget.style.background = "#EFF6FF")}
-      onMouseLeave={(e) => (e.currentTarget.style.background = even ? "#fff" : "#FAFAFA")}
-    >
-      <span style={{ fontSize: 13, fontWeight: 600, color: "#111827" }}>{s.teller_name}</span>
-      <span style={{ fontSize: 12, color: "#6B7280" }}>{fmtDT(s.opened_at)}</span>
-      <span style={{ fontSize: 12, color: "#6B7280" }}>{dur(s.opened_at, s.closed_at)}</span>
-      <span style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>{egp(s.opening_cash)}</span>
-      <span style={{ fontSize: 13, fontWeight: 700, color: "#1a56db" }}>
-        {orders.length > 0 ? egp(totalSales) : "—"}
-      </span>
-      <Badge status={s.status} />
-      <span style={{ fontSize: 12, color: "#9CA3AF", textAlign: "right" }}>View →</span>
-    </div>
+    <>
+      {/* Mobile card */}
+      <div
+        className="sm:hidden"
+        onClick={onClick}
+        style={{
+          padding: "14px 16px",
+          background: even ? "#fff" : "#FAFAFA",
+          borderBottom: "1px solid #F5F5F5",
+          cursor: "pointer",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+          <span style={{ fontSize: 14, fontWeight: 700, color: "#111827" }}>{s.teller_name}</span>
+          <Badge status={s.status} />
+        </div>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div>
+            <p style={{ fontSize: 11, color: "#9CA3AF", margin: 0 }}>{fmtDT(s.opened_at)}</p>
+            <p style={{ fontSize: 11, color: "#9CA3AF", margin: "2px 0 0" }}>Duration: {dur(s.opened_at, s.closed_at)}</p>
+          </div>
+          <div style={{ textAlign: "right" }}>
+            <p style={{ fontSize: 15, fontWeight: 800, color: "#1a56db", margin: 0 }}>{orders.length > 0 ? egp(totalSales) : "—"}</p>
+            <p style={{ fontSize: 11, color: "#9CA3AF", margin: "2px 0 0" }}>Opening: {egp(s.opening_cash)}</p>
+          </div>
+        </div>
+      </div>
+      {/* Desktop row */}
+      <div
+        className="hidden sm:grid"
+        onClick={onClick}
+        style={{
+          gridTemplateColumns: "1fr 1fr 100px 130px 130px 110px 60px",
+          padding: "14px 20px",
+          background: even ? "#fff" : "#FAFAFA",
+          borderBottom: "1px solid #F5F5F5",
+          cursor: "pointer", transition: "background 0.12s",
+          alignItems: "center",
+        }}
+        onMouseEnter={(e) => (e.currentTarget.style.background = "#EFF6FF")}
+        onMouseLeave={(e) => (e.currentTarget.style.background = even ? "#fff" : "#FAFAFA")}
+      >
+        <span style={{ fontSize: 13, fontWeight: 600, color: "#111827" }}>{s.teller_name}</span>
+        <span style={{ fontSize: 12, color: "#6B7280" }}>{fmtDT(s.opened_at)}</span>
+        <span style={{ fontSize: 12, color: "#6B7280" }}>{dur(s.opened_at, s.closed_at)}</span>
+        <span style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>{egp(s.opening_cash)}</span>
+        <span style={{ fontSize: 13, fontWeight: 700, color: "#1a56db" }}>
+          {orders.length > 0 ? egp(totalSales) : "—"}
+        </span>
+        <Badge status={s.status} />
+        <span style={{ fontSize: 12, color: "#9CA3AF", textAlign: "right" }}>View →</span>
+      </div>
+    </>
   );
 }
 
@@ -960,7 +990,7 @@ export default function Shifts() {
   const openShiftObj = currentData?.open_shift;
 
   return (
-    <div style={{ padding: 28, maxWidth: 1100, margin: "0 auto" }}>
+    <div style={{ padding: "16px", maxWidth: 1100, margin: "0 auto" }} className="sm:p-7">
 
       {/* Header */}
       <div style={{ marginBottom: 24, display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 12 }}>
@@ -1028,8 +1058,7 @@ export default function Shifts() {
         </div>
       ) : (
         <Card>
-          <div style={{
-            display: "grid",
+          <div className="hidden sm:grid" style={{
             gridTemplateColumns: "1fr 1fr 100px 130px 130px 110px 60px",
             padding: "10px 20px",
             background: "#F9FAFB", borderBottom: "1px solid #F0F0F0",

@@ -100,9 +100,9 @@ export default function Inventory() {
   const canSelectBranch = ["super_admin", "org_admin"].includes(me?.role);
 
   return (
-    <div className="p-6 lg:p-8 space-y-6">
+    <div className="p-3 sm:p-6 lg:p-8 space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-6 py-4 flex flex-col sm:flex-row sm:items-center gap-4">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-4 sm:px-6 py-4 flex flex-col gap-3">
         <div className="flex-1">
           <h2 className="font-bold text-gray-900">Inventory</h2>
           <p className="text-gray-400 text-xs mt-0.5">Stock levels, adjustments and transfers</p>
@@ -115,7 +115,7 @@ export default function Inventory() {
               {branches?.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
             </select>
           )}
-          <div className="flex items-center gap-1 bg-gray-100 rounded-xl p-1">
+          <div className="flex items-center gap-1 bg-gray-100 rounded-xl p-1 overflow-x-auto">
             {TABS.map(({ id, label, Icon }) => (
               <button key={id} onClick={() => setTab(id)}
                 className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all
@@ -233,8 +233,8 @@ function StockTab({ branchId, branches }) {
         {isLoading ? <Spinner /> : filtered.length === 0 ? (
           <Empty text="No inventory items yet" />
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+          <div className="overflow-x-auto -webkit-overflow-scrolling-touch">
+            <table className="w-full text-sm" style={{ minWidth: 520 }}>
               <thead>
                 <tr className="border-b border-gray-100">
                   <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Item</th>
@@ -500,7 +500,7 @@ function TransfersTab({ branchId, branches }) {
     <>
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
         <div className="px-6 py-4 border-b border-gray-100 flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-1 bg-gray-100 rounded-xl p-1">
+          <div className="flex items-center gap-1 bg-gray-100 rounded-xl p-1 overflow-x-auto">
             {["outgoing", "incoming"].map(d => (
               <button key={d} onClick={() => setDirection(d)}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all capitalize
