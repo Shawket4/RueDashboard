@@ -254,7 +254,7 @@ function RecentOrders({ branches }) {
           <p className="text-sm">No orders yet this shift</p>
         </div>
       ) : (
-        <div className="divide-y divide-gray-50">
+        <div className="divide-y divide-gray-50 overflow-y-auto" style={{ maxHeight: "min(360px, 50dvh)" }}>
           {recent.map((order) => {
             const isVoided = order.status === "voided";
             return (
@@ -315,13 +315,13 @@ function LowStockPanel({ branches }) {
   const low = items
     .filter((i) => parseFloat(i.current_stock) <= parseFloat(i.reorder_threshold))
     .sort((a, b) => (parseFloat(a.current_stock) / parseFloat(a.reorder_threshold)) - (parseFloat(b.current_stock) / parseFloat(b.reorder_threshold)))
-    .slice(0, 6);
+    ;
 
   const UNIT = { g: "g", kg: "kg", ml: "ml", l: "L", pcs: "pcs" };
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-      <div className="px-4 sm:px-6 py-3.5 border-b border-gray-100 flex items-center justify-between">
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col" style={{ minHeight: 0 }}>
+      <div className="px-4 sm:px-6 py-3.5 border-b border-gray-100 flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-2">
           <Package size={14} className="text-amber-500 flex-shrink-0" />
           <h3 className="font-semibold text-gray-900 text-sm">Low Stock</h3>
@@ -349,7 +349,7 @@ function LowStockPanel({ branches }) {
           <p className="text-sm">All stock levels OK</p>
         </div>
       ) : (
-        <div className="divide-y divide-gray-50 overflow-y-auto" style={{ maxHeight: 320 }}>
+        <div className="divide-y divide-gray-50 overflow-y-auto" style={{ maxHeight: "min(360px, 50dvh)" }}>
           {low.map((item) => {
             const pct = Math.min((parseFloat(item.current_stock) / parseFloat(item.reorder_threshold)) * 100, 100);
             const critical = parseFloat(item.current_stock) === 0;

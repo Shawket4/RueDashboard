@@ -107,7 +107,7 @@ export default function Inventory() {
           <h2 className="font-bold text-gray-900">Inventory</h2>
           <p className="text-gray-400 text-xs mt-0.5">Stock levels, adjustments and transfers</p>
         </div>
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           {canSelectBranch && (
             <select value={branchId} onChange={e => setBranchId(e.target.value)}
               className="border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">

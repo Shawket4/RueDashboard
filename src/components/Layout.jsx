@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import Sidebar from "./Sidebar";
+import { Menu } from "lucide-react";
 
 const TITLES = {
   "/":            { title: "Dashboard",     sub: "System overview" },
@@ -14,35 +16,40 @@ const TITLES = {
 };
 
 export default function Layout() {
-  const loc  = useLocation();
-  const segs = loc.pathname.split("/").filter(Boolean);
-  const base = segs.length ? "/" + segs[0] : "/";
-  const meta = TITLES[base] || { title: "Rue POS", sub: "" };
+  const loc    = useLocation();
+  const segs   = loc.pathname.split("/").filter(Boolean);
+  const base   = segs.length ? "/" + segs[0] : "/";
+  const meta   = TITLES[base] || { title: "Rue POS", sub: "" };
+  const [open, setOpen] = useState(false);
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
-      <Sidebar />
+      {/* Sidebar — receives open state on mobile */}
+      <Sidebar mobileOpen={open} onMobileClose={() => setOpen(false)} />
+
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
-        {/* Header — 56px tall on mobile, 64px on desktop */}
-        <header className="bg-white border-b border-gray-100 shadow-sm flex-shrink-0"
-          style={{ height: 56 }}>
-          <div className="flex items-center h-full gap-0">
-            {/* Hamburger placeholder — exactly 56px wide on mobile, 0 on desktop */}
-            <div className="w-14 lg:w-0 flex-shrink-0" />
-            {/* Title — centered on mobile with equal offset, left on desktop */}
-            <div className="flex-1 min-w-0 pr-4 lg:pr-8 lg:pl-8">
-              <h1 className="text-base font-bold text-gray-900 leading-tight truncate">
-                {meta.title}
-              </h1>
-              {meta.sub && (
-                <p className="text-gray-400 text-xs mt-0.5 hidden sm:block truncate">
-                  {meta.sub}
-                </p>
-              )}
-            </div>
+        {/* Header */}
+        <header className="bg-white border-b border-gray-100 shadow-sm flex-shrink-0 flex items-center h-14 px-3 lg:px-8 gap-3">
+          {/* Hamburger — only visible on mobile, sits in header not floating */}
+          <button
+            onClick={() => setOpen(true)}
+            className="lg:hidden flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-xl border border-gray-200 bg-white hover:bg-gray-50 transition"
+            aria-label="Open menu"
+          >
+            <Menu size={18} color="#374151" />
+          </button>
+
+          <div className="flex-1 min-w-0">
+            <h1 className="text-base font-bold text-gray-900 leading-tight truncate">
+              {meta.title}
+            </h1>
+            <p className="text-gray-400 text-xs mt-0.5 hidden sm:block truncate">
+              {meta.sub}
+            </p>
           </div>
         </header>
-        <main className="flex-1 overflow-y-auto overflow-x-hidden scroll-ios">
+
+        <main className="flex-1 overflow-y-auto overflow-x-hidden" style={{ WebkitOverflowScrolling: "touch" }}>
           <Outlet />
         </main>
       </div>
