@@ -3,14 +3,14 @@ import Sidebar from "./Sidebar";
 
 const TITLES = {
   "/":            { title: "Dashboard",     sub: "System overview" },
-  "/orgs":        { title: "Organizations", sub: "Manage all coffee brands on the platform" },
-  "/users":       { title: "Users",         sub: "Manage staff accounts and access" },
-  "/branches":    { title: "Branches",      sub: "Manage branch locations and printers" },
+  "/orgs":        { title: "Organizations", sub: "Manage all coffee brands" },
+  "/users":       { title: "Users",         sub: "Manage staff accounts" },
+  "/branches":    { title: "Branches",      sub: "Manage branch locations" },
   "/menu":        { title: "Menu",          sub: "Categories, items and addons" },
-  "/inventory":   { title: "Inventory",     sub: "Stock levels, adjustments and transfers" },
-  "/recipes":     { title: "Recipes",       sub: "Drink ingredients and quantities" },
+  "/inventory":   { title: "Inventory",     sub: "Stock levels and transfers" },
+  "/recipes":     { title: "Recipes",       sub: "Drink ingredients" },
   "/shifts":      { title: "Shifts",        sub: "Reports and shift management" },
-  "/permissions": { title: "Permissions",   sub: "User access control overrides" },
+  "/permissions": { title: "Permissions",   sub: "User access control" },
 };
 
 export default function Layout() {
@@ -23,17 +23,26 @@ export default function Layout() {
     <div className="flex h-screen bg-gray-50 overflow-hidden">
       <Sidebar />
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
-        <header className="bg-white border-b border-gray-100 shadow-sm flex-shrink-0">
-          <div className="flex items-center px-4 lg:px-8 h-14 lg:h-16 gap-3">
-            {/* Space for mobile hamburger button (rendered inside Sidebar) */}
-            <div className="w-10 lg:hidden flex-shrink-0" />
-            <div className="min-w-0">
-              <h1 className="text-base lg:text-lg font-bold text-gray-900 leading-none truncate">{meta.title}</h1>
-              {meta.sub && <p className="text-gray-400 text-xs mt-0.5 truncate hidden sm:block">{meta.sub}</p>}
+        {/* Header — 56px tall on mobile, 64px on desktop */}
+        <header className="bg-white border-b border-gray-100 shadow-sm flex-shrink-0"
+          style={{ height: 56 }}>
+          <div className="flex items-center h-full gap-0">
+            {/* Hamburger placeholder — exactly 56px wide on mobile, 0 on desktop */}
+            <div className="w-14 lg:w-0 flex-shrink-0" />
+            {/* Title — centered on mobile with equal offset, left on desktop */}
+            <div className="flex-1 min-w-0 pr-4 lg:pr-8 lg:pl-8">
+              <h1 className="text-base font-bold text-gray-900 leading-tight truncate">
+                {meta.title}
+              </h1>
+              {meta.sub && (
+                <p className="text-gray-400 text-xs mt-0.5 hidden sm:block truncate">
+                  {meta.sub}
+                </p>
+              )}
             </div>
           </div>
         </header>
-        <main className="flex-1 overflow-y-auto overflow-x-hidden">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden scroll-ios">
           <Outlet />
         </main>
       </div>

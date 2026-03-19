@@ -6,7 +6,7 @@ export default function BulkActionBar({ selectedIds, onActivate, onDeactivate, o
   const ids = [...selectedIds];
 
   return (
-    <div className="fixed bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-50 w-[calc(100vw-2rem)] sm:w-auto">
+    <div className="fixed left-1/2 -translate-x-1/2 z-50 w-[calc(100vw-2rem)] sm:w-auto" style={{ bottom: "max(16px, env(safe-area-inset-bottom, 16px))" }}>
       <div className="flex items-center gap-1.5 sm:gap-2 bg-gray-900 text-white rounded-2xl shadow-2xl px-3 sm:px-4 py-3 justify-between sm:justify-start">
         <div className="flex items-center gap-2 pr-3 border-r border-white/20">
           <CheckSquare size={15} className="text-blue-400" />

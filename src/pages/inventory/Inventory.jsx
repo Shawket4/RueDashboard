@@ -118,9 +118,9 @@ export default function Inventory() {
           <div className="flex items-center gap-1 bg-gray-100 rounded-xl p-1 overflow-x-auto">
             {TABS.map(({ id, label, Icon }) => (
               <button key={id} onClick={() => setTab(id)}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all
+                className={`flex items-center gap-1 px-2 sm:px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all whitespace-nowrap flex-shrink-0
                   ${tab === id ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}>
-                <Icon size={13} />{label}
+                <Icon size={12} /><span className="hidden xs:inline sm:inline">{label}</span><span className="xs:hidden sm:hidden">{label.slice(0,3)}</span>
               </button>
             ))}
           </div>
@@ -378,7 +378,7 @@ function AdjustTab({ branchId }) {
           <Empty text="No adjustments recorded yet" />
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full text-sm" style={{ minWidth: 480 }}>
               <thead>
                 <tr className="border-b border-gray-100">
                   <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Item</th>
@@ -522,7 +522,7 @@ function TransfersTab({ branchId, branches }) {
           <Empty text={`No ${direction} transfers`} />
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full text-sm" style={{ minWidth: 480 }}>
               <thead>
                 <tr className="border-b border-gray-100">
                   <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Item</th>
@@ -782,7 +782,7 @@ function SoftServeTab({ branchId, orgId }) {
             <Empty text="No batches logged yet" />
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="w-full text-sm" style={{ minWidth: 480 }}>
                 <thead>
                   <tr className="border-b border-gray-100">
                     <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Item</th>

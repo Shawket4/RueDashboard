@@ -349,7 +349,7 @@ function LowStockPanel({ branches }) {
           <p className="text-sm">All stock levels OK</p>
         </div>
       ) : (
-        <div className="divide-y divide-gray-50">
+        <div className="divide-y divide-gray-50 overflow-y-auto" style={{ maxHeight: 320 }}>
           {low.map((item) => {
             const pct = Math.min((parseFloat(item.current_stock) / parseFloat(item.reorder_threshold)) * 100, 100);
             const critical = parseFloat(item.current_stock) === 0;
@@ -478,7 +478,7 @@ function SuperAdminStats() {
     { icon: Coffee,    label: "Active Users",  value: users?.filter(u => u.is_active).length, sub: "Accounts", color: "text-green-600", bg: "bg-green-50", border: "border-green-100", loading: usersLoading },
   ];
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
       {stats.map((s, i) => <StatCard key={i} {...s} />)}
     </div>
   );
@@ -531,7 +531,7 @@ function OrgAdminStats({ orgId }) {
     { icon: Coffee,    label: "Operating",value: branches?.filter(b => b.is_active).length, sub: "Today", color: "text-amber-600", bg: "bg-amber-50", border: "border-amber-100", loading: branchesLoading },
   ];
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
       {stats.map((s, i) => <StatCard key={i} {...s} />)}
       <ActiveShiftsCard branches={branches} loading={branchesLoading} />
     </div>
@@ -555,7 +555,7 @@ export default function Dashboard() {
   const showBranchGrid = isOrgLevel && (branches?.length ?? 0) > 0;
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-6">
+    <div className="p-3 sm:p-5 lg:p-8 space-y-4 sm:space-y-6">
 
       {/* Welcome hero */}
       <div className="rounded-2xl p-5 sm:p-6 lg:p-8 text-white relative overflow-hidden"
@@ -565,7 +565,7 @@ export default function Dashboard() {
         <div className="relative z-10 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
           <div className="flex-1 min-w-0">
             <p className="text-blue-200 text-xs sm:text-sm font-medium mb-1">Dashboard</p>
-            <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-1 leading-snug">{greet(user?.name)}</h2>
+            <h2 className="text-lg sm:text-2xl lg:text-3xl font-bold mb-1 leading-snug">{greet(user?.name)}</h2>
             <p className="text-blue-100 text-xs sm:text-sm capitalize">{role?.replace(/_/g, " ")} · Rue POS</p>
           </div>
           {!branchesLoading && branches?.length > 0 && (
@@ -583,7 +583,7 @@ export default function Dashboard() {
       {showBranchGrid && (
         <div>
           <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Branch Overview</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {branchesLoading
               ? Array.from({ length: 3 }).map((_, i) => (
                   <div key={i} className="bg-white rounded-2xl border border-gray-100 shadow-sm h-44 animate-pulse" />

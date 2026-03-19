@@ -3,23 +3,24 @@
 * {
   font-family: 'Cairo', sans-serif;
   -webkit-tap-highlight-color: transparent;
+  box-sizing: border-box;
 }
 
 html, body, #root {
   overflow-x: hidden;
-  overscroll-behavior: none;
+  overscroll-behavior-y: none;
 }
 
-/* Safe area support for iPhone notch/home bar */
-.safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
-.safe-top    { padding-top:    env(safe-area-inset-top); }
+/* Prevent iOS bounce from hiding content */
+body { position: relative; }
 
-/* Prevent table overflow breaking layout */
-.table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+/* Safe area padding utilities */
+.pb-safe { padding-bottom: max(1rem, env(safe-area-inset-bottom)); }
+.pt-safe { padding-top: env(safe-area-inset-top); }
 
-/* Mobile card stacks instead of tables */
-@media (max-width: 640px) {
-  .mobile-card-list { display: flex; flex-direction: column; gap: 0.75rem; }
-  .mobile-hide      { display: none !important; }
-  .mobile-full      { width: 100% !important; }
-}
+/* Smooth momentum scrolling on iOS */
+.scroll-ios { -webkit-overflow-scrolling: touch; }
+
+/* Hide scrollbar but keep scrolling (for tab bars) */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }

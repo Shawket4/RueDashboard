@@ -68,7 +68,7 @@ export default function Login() {
       </div>
 
       {/* Right panel */}
-      <div className="flex-1 flex flex-col items-center justify-center bg-gray-50 px-4 sm:px-6 py-8 sm:py-12">
+      <div className="flex-1 flex flex-col items-center justify-center bg-gray-50 px-4 py-6 sm:px-6 sm:py-12">
         {/* Mobile logo */}
         <div className="flex lg:hidden items-center gap-3 mb-8">
           <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg, #1a56db, #3b28cc)" }}>
@@ -78,7 +78,7 @@ export default function Login() {
         </div>
 
         <div className="w-full max-w-sm px-1 sm:px-0">
-          <div className="bg-white rounded-2xl shadow-xl shadow-gray-200/60 p-6 sm:p-8 border border-gray-100">
+          <div className="bg-white rounded-2xl shadow-xl shadow-gray-200/60 p-5 sm:p-8 border border-gray-100">
             <h1 className="text-2xl font-bold text-gray-900 mb-1">Welcome Back</h1>
             <p className="text-gray-500 text-sm mb-7">Sign in to your account to continue</p>
 

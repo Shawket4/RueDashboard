@@ -19,20 +19,20 @@ export default function Menu() {
   return (
     <div className="p-6 lg:p-8 space-y-6">
       {/* Header + tab bar */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-6 py-4 flex flex-col sm:flex-row sm:items-center gap-4">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-4 sm:px-6 py-3 sm:py-4 flex flex-col sm:flex-row sm:items-center gap-3">
         <div className="flex-1">
           <h2 className="font-bold text-gray-900">Menu Management</h2>
           <p className="text-gray-400 text-xs mt-0.5">Manage your categories, drinks and addons</p>
         </div>
-        <div className="flex items-center gap-1 bg-gray-100 rounded-xl p-1">
+        <div className="flex items-center gap-1 bg-gray-100 rounded-xl p-1 overflow-x-auto no-scrollbar flex-shrink-0">
           {TABS.map(({ id, label, Icon }) => (
             <button
               key={id}
               onClick={() => setTab(id)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all
+              className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all whitespace-nowrap flex-shrink-0
                 ${tab === id ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
             >
-              <Icon size={14} />{label}
+              <Icon size={13} />{label}
             </button>
           ))}
         </div>

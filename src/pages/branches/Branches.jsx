@@ -121,7 +121,7 @@ export default function Branches() {
   const isPending = createMutation.isPending || updateMutation.isPending;
 
   return (
-    <div className="p-3 sm:p-6 lg:p-8 space-y-4 sm:space-y-6">
+    <div className="p-3 sm:p-5 lg:p-8 space-y-4 sm:space-y-6">
       {/* Header bar */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-4 sm:px-6 py-4 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
         <div className="flex-1">
@@ -233,8 +233,8 @@ export default function Branches() {
 
       {/* Modal */}
       {modal && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md border border-gray-100 max-h-[92dvh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
+          <div className="bg-white w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl shadow-2xl border border-gray-100 max-h-[92dvh] overflow-y-auto">
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
               <div>
                 <h2 className="font-bold text-gray-900">

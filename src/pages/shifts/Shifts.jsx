@@ -657,7 +657,7 @@ function ShiftDetail({ shift, branchName, onClose }) {
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div style={{
-        width: "min(820px, 100vw)",
+        width: "min(820px, 100dvw)",
         background: "#F9FAFB",
         boxShadow: "-8px 0 40px rgba(0,0,0,0.15)",
         display: "flex", flexDirection: "column",
@@ -665,7 +665,7 @@ function ShiftDetail({ shift, branchName, onClose }) {
       }}>
         {/* Sticky header */}
         <div style={{
-          padding: "18px 24px", background: "#fff",
+          padding: "14px 16px", background: "#fff",
           borderBottom: "1px solid #F0F0F0",
           display: "flex", alignItems: "center", gap: 14,
           position: "sticky", top: 0, zIndex: 10,
@@ -990,24 +990,25 @@ export default function Shifts() {
   const openShiftObj = currentData?.open_shift;
 
   return (
-    <div style={{ padding: "16px", maxWidth: 1100, margin: "0 auto" }} className="sm:p-7">
+    <div style={{ padding: "12px 14px", maxWidth: 1100, margin: "0 auto" }} className="sm:p-7">
 
       {/* Header */}
-      <div style={{ marginBottom: 24, display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 12 }}>
+      <div style={{ marginBottom: 16, display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 10 }}>
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 800, color: "#111827", margin: 0 }}>Shifts</h1>
+          <h1 style={{ fontSize: 18, fontWeight: 800, color: "#111827", margin: 0 }}>Shifts</h1>
           <p style={{ fontSize: 13, color: "#6B7280", margin: "4px 0 0" }}>
             Manage and review shifts across branches
           </p>
         </div>
-        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+        <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
           <select
             value={branchId || ""}
             onChange={(e) => setBranchId(e.target.value)}
             style={{
-              padding: "8px 14px", border: "1.5px solid #E5E7EB",
+              padding: "8px 12px", border: "1.5px solid #E5E7EB",
               borderRadius: 9, fontSize: 13, color: "#111827",
               background: "#fff", cursor: "pointer", outline: "none",
+              maxWidth: "100%",
             }}
           >
             {branches.map((b) => (

@@ -159,12 +159,12 @@ export default function Permissions() {
 
       {/* Global presets */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-6 py-4">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+        <div className="flex flex-col gap-3">
           <div className="flex-1">
             <p className="font-semibold text-gray-800 text-sm">Global Presets</p>
             <p className="text-gray-400 text-xs mt-0.5">Apply a permission level to all resources at once</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             {PRESETS.map(preset => (
               <button key={preset.label} onClick={() => applyGlobalPreset(preset)}
                 className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold border transition ${preset.color}`}>
@@ -231,7 +231,7 @@ export default function Permissions() {
                       className={`flex items-center justify-between px-3 py-2.5 rounded-xl border transition cursor-pointer
                         ${effective ? style.active : "bg-gray-50 border-gray-200 text-gray-400"}`}
                       onClick={() => handleToggle(key, action)}>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <div className={`w-2 h-2 rounded-full flex-shrink-0 ${effective ? style.dot : "bg-gray-300"}`} />
                         <span className="text-xs font-semibold">{style.label}</span>
                         {/* Source indicator */}
