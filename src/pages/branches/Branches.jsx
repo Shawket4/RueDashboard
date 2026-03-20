@@ -6,7 +6,7 @@ import { getOrgs } from "../../api/orgs";
 import { useAuth } from "../../store/auth.jsx";
 
 const TIMEZONES = [
-  "Africa/Cairo", "Asia/Riyadh", "Asia/Dubai", "Europe/London", "UTC",
+  "Africa/Cairo",
 ];
 
 const PRINTER_BRANDS = [
