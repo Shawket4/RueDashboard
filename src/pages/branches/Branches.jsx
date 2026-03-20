@@ -6,16 +6,18 @@ import { getOrgs } from "../../api/orgs";
 import { useAuth } from "../../store/auth.jsx";
 
 const TIMEZONES = [
-  "Africa/Cairo",
-  "Asia/Riyadh",
-  "Asia/Dubai",
-  "Europe/London",
-  "UTC",
+  "Africa/Cairo", "Asia/Riyadh", "Asia/Dubai", "Europe/London", "UTC",
+];
+
+const PRINTER_BRANDS = [
+  { value: "star",  label: "Star Micronics" },
+  { value: "epson", label: "Epson" },
 ];
 
 const EMPTY_FORM = {
   name: "", address: "", phone: "",
   timezone: "Africa/Cairo",
+  printer_brand: "",
   printer_ip: "", printer_port: 9100,
   org_id: "",
 };
@@ -24,12 +26,12 @@ export default function Branches() {
   const { user: me } = useAuth();
   const qc = useQueryClient();
 
-  const [modal,    setModal]    = useState(false);
-  const [editing,  setEditing]  = useState(null); // Branch being edited
-  const [search,   setSearch]   = useState("");
-  const [selOrg,   setSelOrg]   = useState(me?.org_id || "");
-  const [form,     setForm]     = useState({ ...EMPTY_FORM, org_id: me?.org_id || "" });
-  const [error,    setError]    = useState("");
+  const [modal,   setModal]   = useState(false);
+  const [editing, setEditing] = useState(null);
+  const [search,  setSearch]  = useState("");
+  const [selOrg,  setSelOrg]  = useState(me?.org_id || "");
+  const [form,    setForm]    = useState({ ...EMPTY_FORM, org_id: me?.org_id || "" });
+  const [error,   setError]   = useState("");
 
   const { data: orgs } = useQuery({
     queryKey: ["orgs"],
@@ -70,14 +72,15 @@ export default function Branches() {
   const openEdit = (branch) => {
     setEditing(branch);
     setForm({
-      org_id:       branch.org_id,
-      name:         branch.name,
-      address:      branch.address || "",
-      phone:        branch.phone || "",
-      timezone:     branch.timezone,
-      printer_ip:   branch.printer_ip || "",
-      printer_port: branch.printer_port || 9100,
-      is_active:    branch.is_active ?? true,
+      org_id:        branch.org_id,
+      name:          branch.name,
+      address:       branch.address || "",
+      phone:         branch.phone || "",
+      timezone:      branch.timezone,
+      printer_brand: branch.printer_brand || "",
+      printer_ip:    branch.printer_ip || "",
+      printer_port:  branch.printer_port || 9100,
+      is_active:     branch.is_active ?? true,
     });
     setError("");
     setModal(true);
@@ -93,19 +96,28 @@ export default function Branches() {
   const handleSubmit = (e) => {
     e.preventDefault();
     setError("");
-    // Validate printer IP
+
+    // Validate printer fields together
+    const hasIp    = !!form.printer_ip.trim();
+    const hasBrand = !!form.printer_brand;
+    if (hasIp && !hasBrand) { setError("Please select a printer brand"); return; }
+    if (hasBrand && !hasIp) { setError("Please enter a printer IP address"); return; }
+
     if (form.printer_ip) {
       const ipRe = /^(\d{1,3}\.){3}\d{1,3}$/;
       if (!ipRe.test(form.printer_ip)) { setError("Invalid printer IP format"); return; }
-      if (form.printer_ip.split(".").some((o) => parseInt(o) > 255)) { setError("Invalid printer IP (octet > 255)"); return; }
+      if (form.printer_ip.split(".").some(o => parseInt(o) > 255)) { setError("Invalid printer IP (octet > 255)"); return; }
     }
+
     const payload = {
       ...form,
-      printer_port: parseInt(form.printer_port) || 9100,
-      printer_ip:   form.printer_ip || null,
-      address:      form.address || null,
-      phone:        form.phone || null,
+      printer_brand: form.printer_brand || null,
+      printer_port:  parseInt(form.printer_port) || 9100,
+      printer_ip:    form.printer_ip || null,
+      address:       form.address || null,
+      phone:         form.phone || null,
     };
+
     if (editing) {
       updateMutation.mutate({ id: editing.id, data: payload });
     } else {
@@ -120,9 +132,12 @@ export default function Branches() {
 
   const isPending = createMutation.isPending || updateMutation.isPending;
 
+  const brandLabel = (brand) =>
+    PRINTER_BRANDS.find(b => b.value === brand)?.label ?? brand;
+
   return (
     <div className="p-3 sm:p-5 lg:p-8 space-y-4 sm:space-y-6">
-      {/* Header bar */}
+      {/* Header */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-4 sm:px-6 py-4 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
         <div className="flex-1">
           <h2 className="font-bold text-gray-900">Branches</h2>
@@ -151,7 +166,7 @@ export default function Branches() {
         </div>
       </div>
 
-      {/* Cards grid */}
+      {/* Cards */}
       <div>
         {!selOrg ? (
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 text-center text-gray-400 text-sm">
@@ -170,7 +185,6 @@ export default function Branches() {
             {filtered.map(b => (
               <div key={b.id}
                 className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow overflow-hidden">
-                {/* Card header */}
                 <div className="px-5 py-4 border-b border-gray-50 flex items-start justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
@@ -180,9 +194,7 @@ export default function Branches() {
                     <div>
                       <p className="font-semibold text-gray-900 text-sm">{b.name}</p>
                       <span className={`text-xs font-medium px-2 py-0.5 rounded-full
-                        ${b.is_active
-                          ? "bg-green-50 text-green-600"
-                          : "bg-gray-100 text-gray-400"}`}>
+                        ${b.is_active ? "bg-green-50 text-green-600" : "bg-gray-100 text-gray-400"}`}>
                         {b.is_active ? "Active" : "Inactive"}
                       </span>
                     </div>
@@ -199,7 +211,6 @@ export default function Branches() {
                   </div>
                 </div>
 
-                {/* Card body */}
                 <div className="px-5 py-4 space-y-2.5">
                   {b.address && (
                     <div className="flex items-start gap-2 text-sm text-gray-500">
@@ -216,7 +227,14 @@ export default function Branches() {
                   {b.printer_ip && (
                     <div className="flex items-center gap-2 text-sm text-gray-500">
                       <Printer size={14} className="text-gray-400 flex-shrink-0" />
-                      <span className="font-mono text-xs">{b.printer_ip}:{b.printer_port}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-xs">{b.printer_ip}:{b.printer_port}</span>
+                        {b.printer_brand && (
+                          <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-600">
+                            {brandLabel(b.printer_brand)}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   )}
                   <div className="pt-1">
@@ -251,7 +269,6 @@ export default function Branches() {
             </div>
 
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
-              {/* Org selector — super_admin only, create mode only */}
               {me?.role === "super_admin" && !editing && (
                 <div>
                   <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Organization</label>
@@ -264,11 +281,14 @@ export default function Branches() {
                 </div>
               )}
 
-              <Field label="Branch Name" value={form.name} onChange={v => setForm(f => ({ ...f, name: v }))}
+              <Field label="Branch Name" value={form.name}
+                onChange={v => setForm(f => ({ ...f, name: v }))}
                 placeholder="Maadi Branch" required />
-              <Field label="Address" value={form.address} onChange={v => setForm(f => ({ ...f, address: v }))}
+              <Field label="Address" value={form.address}
+                onChange={v => setForm(f => ({ ...f, address: v }))}
                 placeholder="123 Road 9, Maadi, Cairo" />
-              <Field label="Phone" value={form.phone} onChange={v => setForm(f => ({ ...f, phone: v }))}
+              <Field label="Phone" value={form.phone}
+                onChange={v => setForm(f => ({ ...f, phone: v }))}
                 placeholder="+20 2 1234 5678" />
 
               <div>
@@ -279,16 +299,33 @@ export default function Branches() {
                 </select>
               </div>
 
-              <div className="grid grid-cols-3 gap-3">
-                <div className="col-span-2">
-                  <Field label="Printer IP" value={form.printer_ip}
-                    onChange={v => setForm(f => ({ ...f, printer_ip: v }))}
-                    placeholder="192.168.1.100" />
-                </div>
+              {/* Printer section */}
+              <div className="space-y-3 p-4 bg-gray-50 rounded-xl border border-gray-200">
+                <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide flex items-center gap-2">
+                  <Printer size={13} /> Printer Configuration
+                </p>
                 <div>
-                  <Field label="Port" value={form.printer_port}
-                    onChange={v => setForm(f => ({ ...f, printer_port: v }))}
-                    placeholder="9100" type="number" />
+                  <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Brand</label>
+                  <select value={form.printer_brand}
+                    onChange={e => setForm(f => ({ ...f, printer_brand: e.target.value }))}
+                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                    <option value="">No printer</option>
+                    {PRINTER_BRANDS.map(b => (
+                      <option key={b.value} value={b.value}>{b.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="col-span-2">
+                    <Field label="IP Address" value={form.printer_ip}
+                      onChange={v => setForm(f => ({ ...f, printer_ip: v }))}
+                      placeholder="192.168.1.100" />
+                  </div>
+                  <div>
+                    <Field label="Port" value={form.printer_port}
+                      onChange={v => setForm(f => ({ ...f, printer_port: v }))}
+                      placeholder="9100" type="number" />
+                  </div>
                 </div>
               </div>
 
