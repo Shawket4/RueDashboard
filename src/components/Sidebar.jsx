@@ -25,6 +25,8 @@ const NAV = [
       { to: "/inventory", icon: Package,   label: "Inventory",     sub: "Stock & transfers",     roles: ["super_admin","org_admin","branch_manager"] },
       { to: "/recipes",   icon: BookOpen,  label: "Recipes",       sub: "Drink ingredients",     roles: ["super_admin","org_admin","branch_manager"] },
       { to: "/shifts",    icon: Clock,     label: "Shifts",        sub: "Reports & management",  roles: ["super_admin","org_admin","branch_manager"] },
+      { to: "/analytics", icon: BarChart2, label: "Analytics", sub: "Reports & trends",
+        roles: ["super_admin","org_admin","branch_manager"] },
     ],
   },
 ];
