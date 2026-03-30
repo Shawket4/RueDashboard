@@ -11,18 +11,30 @@ import { getErrorMessage } from "@/lib/client";
 import { cn } from "@/lib/utils";
 
 const FEATURES = [
-  { icon: Zap,    label: "Real-time shifts",   desc: "Live order tracking across all branches" },
-  { icon: Shield, label: "Role-based access",  desc: "Granular permissions per user" },
-  { icon: Globe,  label: "Multi-branch",       desc: "Manage all locations from one place" },
+  {
+    icon: Zap,
+    label: "Real-time shifts",
+    desc: "Live order tracking across all branches",
+  },
+  {
+    icon: Shield,
+    label: "Role-based access",
+    desc: "Granular permissions per user",
+  },
+  {
+    icon: Globe,
+    label: "Multi-branch",
+    desc: "Manage all locations from one place",
+  },
 ];
 
 export default function Login() {
-  const [email,    setEmail]    = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [show,     setShow]     = useState(false);
-  const [loading,  setLoading]  = useState(false);
+  const [show, setShow] = useState(false);
+  const [loading, setLoading] = useState(false);
   const { signIn } = useAuthStore();
-  const navigate   = useNavigate();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,22 +75,31 @@ export default function Login() {
             <div className="w-10 h-10 bg-white/20 backdrop-blur rounded-xl flex items-center justify-center">
               <Coffee size={20} className="text-white" />
             </div>
-            <span className="text-white text-xl font-bold tracking-tight">Rue POS</span>
+            <span className="text-white text-xl font-bold tracking-tight">
+              Rue POS
+            </span>
           </div>
 
           {/* Hero copy */}
           <div>
             <h2 className="text-white text-4xl font-extrabold leading-tight mb-4">
-              Coffee Shop<br />Management<br />
+              Coffee Shop
+              <br />
+              Management
+              <br />
               <span className="text-blue-200">Made Simple.</span>
             </h2>
             <p className="text-blue-100 text-base leading-relaxed mb-10 max-w-sm">
-              One dashboard for every branch, every shift, every order — with full inventory and analytics built in.
+              One dashboard for every branch, every shift, every order — with
+              full inventory and analytics built in.
             </p>
 
             <div className="space-y-4">
               {FEATURES.map(({ icon: Icon, label, desc }) => (
-                <div key={label} className="flex items-center gap-4 bg-white/10 backdrop-blur-sm rounded-2xl p-4">
+                <div
+                  key={label}
+                  className="flex items-center gap-4 bg-white/10 backdrop-blur-sm rounded-2xl p-4"
+                >
                   <div className="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
                     <Icon size={16} className="text-white" />
                   </div>
@@ -91,7 +112,9 @@ export default function Login() {
             </div>
           </div>
 
-          <p className="text-blue-300 text-xs">© 2026 The Rue Coffee. All rights reserved.</p>
+          <p className="text-blue-300 text-xs">
+            © 2026 The Rue Coffee. All rights reserved.
+          </p>
         </div>
       </div>
 
@@ -107,8 +130,12 @@ export default function Login() {
 
         <div className="w-full max-w-sm">
           <div className="mb-8">
-            <h1 className="text-2xl font-extrabold tracking-tight">Welcome back</h1>
-            <p className="text-muted-foreground text-sm mt-1">Sign in to your account to continue</p>
+            <h1 className="text-2xl font-extrabold tracking-tight">
+              Welcome back
+            </h1>
+            <p className="text-muted-foreground text-sm mt-1">
+              Sign in to your account to continue
+            </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
@@ -121,7 +148,7 @@ export default function Login() {
                 autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@theruecoffe.com"
+                placeholder="you@theruecoffee.com"
                 required
                 className="h-11"
               />

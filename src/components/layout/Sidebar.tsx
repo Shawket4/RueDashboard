@@ -222,24 +222,19 @@ function SidebarContent({ collapsed, onClose }: SidebarContentProps) {
                 {group.items.map(({ to, icon: Icon, label, sub }) => (
                   <Tooltip key={to} disableHoverableContent={!collapsed}>
                     <TooltipTrigger asChild>
-                      <NavLink
-                        to={to}
-                        end={to === "/"}
-                        onClick={onClose}
-                        className={({ isActive }) =>
-                          cn(
-                            "relative flex items-center gap-3 rounded-xl transition-all duration-150",
-                            collapsed
-                              ? "justify-center h-10 w-10 mx-auto"
-                              : "px-3 py-2.5",
-                            isActive
-                              ? "bg-accent text-accent-foreground font-semibold"
-                              : "text-muted-foreground hover:bg-muted hover:text-foreground",
-                          )
-                        }
-                      >
+                      <NavLink to={to} end={to === "/"} onClick={onClose}>
                         {({ isActive }) => (
-                          <>
+                          <div
+                            className={cn(
+                              "relative flex items-center gap-3 rounded-xl transition-all duration-150",
+                              collapsed
+                                ? "justify-center h-10 w-10 mx-auto"
+                                : "px-3 py-2.5",
+                              isActive
+                                ? "bg-accent text-accent-foreground font-semibold"
+                                : "text-foreground hover:bg-muted hover:text-foreground",
+                            )}
+                          >
                             {isActive && !collapsed && (
                               <span className="nav-active-indicator" />
                             )}
@@ -249,7 +244,7 @@ function SidebarContent({ collapsed, onClose }: SidebarContentProps) {
                                 collapsed ? "w-8 h-8" : "w-7 h-7",
                                 isActive
                                   ? "brand-gradient text-white shadow-sm"
-                                  : "bg-muted text-muted-foreground",
+                                  : "bg-muted text-foreground",
                               )}
                             >
                               <Icon size={collapsed ? 15 : 14} />
@@ -259,9 +254,7 @@ function SidebarContent({ collapsed, onClose }: SidebarContentProps) {
                                 <p
                                   className={cn(
                                     "text-sm leading-tight truncate",
-                                    isActive
-                                      ? "font-semibold text-foreground"
-                                      : "font-medium",
+                                    isActive ? "font-semibold" : "font-medium",
                                   )}
                                 >
                                   {label}
@@ -277,7 +270,7 @@ function SidebarContent({ collapsed, onClose }: SidebarContentProps) {
                                 className="text-primary flex-shrink-0"
                               />
                             )}
-                          </>
+                          </div>
                         )}
                       </NavLink>
                     </TooltipTrigger>

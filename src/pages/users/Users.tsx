@@ -180,7 +180,7 @@ function UserFormDialog({
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="ahmed@theruecoffe.com"
+                placeholder="ahmed@theruecoffee.com"
               />
             </div>
             <div className="space-y-2">

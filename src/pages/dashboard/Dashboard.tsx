@@ -18,7 +18,7 @@ import {
   WifiOff,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Card as UICard, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card as UICard } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -873,8 +873,6 @@ export default function Dashboard() {
     <div className="p-4 sm:p-6 lg:p-8 space-y-5 max-w-[1400px] mx-auto animate-fade-in">
       {/* ── Welcome hero ─────────────────────────────────────── */}
       <div className="brand-gradient rounded-2xl p-6 sm:p-8 text-white relative overflow-hidden">
-        <div className="absolute -top-10 -right-10 w-48 h-48 rounded-full bg-white/10 pointer-events-none" />
-        <div className="absolute -bottom-12 right-20 w-36 h-36 rounded-full bg-white/5 pointer-events-none" />
         <div className="relative z-10 flex flex-col sm:flex-row sm:items-center gap-4">
           <div className="flex-1 min-w-0">
             <p className="text-blue-200 text-xs sm:text-sm font-medium mb-1">
