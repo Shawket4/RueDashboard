@@ -127,7 +127,7 @@ function ShiftReportView({
     cash_movements_out,
     cash_movements_net,
     total_payments,
-    net_payments,
+    // net_payments omitted — equals total_payments (voided already excluded)
   } = report;
   const discrepancy = shift.cash_discrepancy ?? 0;
 
@@ -167,7 +167,7 @@ function ShiftReportView({
               value={egp(total_payments)}
               iconColor="brand-gradient"
             />
-            <StatCard title="Net Payments" value={egp(net_payments)} />
+            <StatCard title="Net Payments" value={egp(total_payments)} />
             <StatCard title="Opening Cash" value={egp(shift.opening_cash)} />
           </div>
 
