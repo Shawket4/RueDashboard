@@ -27,7 +27,7 @@ import { getOrgs } from "@/api/orgs";
 import { getUsers } from "@/api/users";
 import { getBranches } from "@/api/branches";
 import { getCurrentShift } from "@/api/shifts";
-import { getInventoryItems } from "@/api/inventory";
+import { getBranchStock } from "@/api/inventory";
 import { getOrders } from "@/api/orders";
 import {
   egp,
@@ -37,7 +37,7 @@ import {
   PAYMENT_BG,
   TZ,
 } from "@/utils/format";
-import type { Branch, Order, InventoryItem } from "@/types";
+import type { Branch, Order, BranchInventoryItem } from "@/types";
 
 // ── Card component shorthand ──────────────────────────────────────────────────
 function Card({
@@ -161,7 +161,7 @@ function BranchCard({ branch }: { branch: Branch }) {
 
   const { data: invItems = [] } = useQuery({
     queryKey: ["inventory", branch.id],
-    queryFn: () => getInventoryItems(branch.id).then((r) => r.data),
+    queryFn: () => getBranchStock(branch.id).then((r) => r.data),
     staleTime: 120_000,
   });
 
@@ -169,10 +169,8 @@ function BranchCard({ branch }: { branch: Branch }) {
   const openShift = shiftData?.open_shift;
   const validOrds = orders.filter((o) => o.status !== "voided");
   const todaySales = validOrds.reduce((s, o) => s + o.total_amount, 0);
-  const lowStock = (invItems as InventoryItem[]).filter(
-    (i) =>
-      parseFloat(String(i.current_stock)) <=
-      parseFloat(String(i.reorder_threshold)),
+  const lowStock = (invItems as BranchInventoryItem[]).filter(
+    (i) => i.below_reorder,
   );
 
   return (
@@ -447,23 +445,23 @@ function LowStockPanel({ branches }: { branches: Branch[] }) {
     staleTime: 120_000,
     queryFn: async () => {
       const results = await Promise.allSettled(
-        branches.map((b) => getInventoryItems(b.id).then((r) => r.data)),
+        branches.map((b) => getBranchStock(b.id).then((r) => r.data)),
       );
-      const map = new Map<string, InventoryItem>();
+      const map = new Map<string, BranchInventoryItem>();
       results
         .filter(
-          (r): r is PromiseFulfilledResult<InventoryItem[]> =>
+          (r): r is PromiseFulfilledResult<BranchInventoryItem[]> =>
             r.status === "fulfilled",
         )
         .flatMap((r) => r.value)
         .forEach((item) => {
-          const existing = map.get(item.name);
+          const existing = map.get(item.ingredient_name);
           if (
             !existing ||
             parseFloat(String(item.current_stock)) <
               parseFloat(String(existing.current_stock))
           ) {
-            map.set(item.name, item);
+            map.set(item.ingredient_name, item);
           }
         });
       return [...map.values()];
@@ -471,17 +469,13 @@ function LowStockPanel({ branches }: { branches: Branch[] }) {
   });
 
   const low = items
-    .filter(
-      (i) =>
-        parseFloat(String(i.current_stock)) <=
-        parseFloat(String(i.reorder_threshold)),
-    )
+    .filter((i) => i.below_reorder)
     .sort(
       (a, b) =>
         parseFloat(String(a.current_stock)) /
-          parseFloat(String(a.reorder_threshold)) -
+          Math.max(parseFloat(String(a.reorder_threshold)), 0.001) -
         parseFloat(String(b.current_stock)) /
-          parseFloat(String(b.reorder_threshold)),
+          Math.max(parseFloat(String(b.reorder_threshold)), 0.001),
     );
 
   return (
@@ -528,7 +522,7 @@ function LowStockPanel({ branches }: { branches: Branch[] }) {
               <div key={item.id} className="px-5 py-3">
                 <div className="flex items-center justify-between mb-1">
                   <p className="text-sm font-medium truncate mr-2">
-                    {item.name}
+                    {item.ingredient_name}
                   </p>
                   <span
                     className={cn(

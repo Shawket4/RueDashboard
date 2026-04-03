@@ -929,12 +929,12 @@ export default function Analytics() {
                     iconColor="bg-amber-500"
                   />
                   <StatCard
-                    title="Active Items"
-                    value={stock.items.filter((i) => i.is_active).length}
+                    title="OK Stock"
+                    value={stock.items.filter((i) => !i.below_reorder).length}
                   />
                   <StatCard
-                    title="Inactive Items"
-                    value={stock.items.filter((i) => !i.is_active).length}
+                    title="Reorder Threshold"
+                    value={`${stock.items.filter((i) => i.below_reorder).length} items`}
                     iconColor="bg-muted"
                   />
                 </div>
@@ -957,13 +957,13 @@ export default function Analytics() {
                         );
                         return (
                           <div
-                            key={item.inventory_item_id}
+                            key={item.branch_inventory_id}
                             className="flex items-center gap-4 px-4 py-3"
                           >
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 mb-1">
                                 <span className="text-sm font-medium">
-                                  {item.item_name}
+                                  {item.ingredient_name}
                                 </span>
                                 {item.below_reorder && (
                                   <Badge

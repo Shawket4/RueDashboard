@@ -71,13 +71,12 @@ function DrinkRecipePanel({ item, orgId }: { item: MenuItem; orgId: string }) {
     queryFn: () => recipesApi.getDrinkRecipes(item.id).then((r) => r.data),
   });
 
-  // Org-level inventory — used as a convenience picker so the user
-  // doesn't have to type ingredient names manually. We extract name+unit
-  // from the selected item; the actual UUID is never sent to the backend.
+  // Org-level catalog — used as a convenience picker so the user
+  // doesn't have to type ingredient names manually.
   const { data: invItems = [] } = useQuery({
-    queryKey: ["inventory-items-org", orgId],
+    queryKey: ["org-catalog", orgId],
     queryFn: () =>
-      inventoryApi.getInventoryItemsByOrg(orgId).then((r) => r.data),
+      inventoryApi.getCatalog(orgId).then((r) => r.data),
     enabled: !!orgId,
   });
 
@@ -246,9 +245,9 @@ function AddonRecipePanel({
   });
 
   const { data: invItems = [] } = useQuery({
-    queryKey: ["inventory-items-org", orgId],
+    queryKey: ["org-catalog", orgId],
     queryFn: () =>
-      inventoryApi.getInventoryItemsByOrg(orgId).then((r) => r.data),
+      inventoryApi.getCatalog(orgId).then((r) => r.data),
     enabled: !!orgId,
   });
 
