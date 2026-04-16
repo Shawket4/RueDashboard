@@ -88,7 +88,7 @@ export const deleteAddonSlot = (menuItemId: string, slotId: string) =>
 // ── Optional fields ───────────────────────────────────────────────────────────
 // Per-drink checkboxes (e.g., "Add Whip") with optional inventory deductions.
 export const getOptionalFields = (menuItemId: string) =>
-  client.get<MenuItemOptionalField[]>(`/menu-items/${menuItemId}/optional-fields`);
+  client.get<MenuItemOptionalField[]>(`/menu-items/${menuItemId}/optionals`);
 
 export const upsertOptionalField = (
   menuItemId: string,
@@ -100,7 +100,7 @@ export const upsertOptionalField = (
     quantity_used?: number | null;
     is_active?: boolean;
   },
-) => client.post<MenuItemOptionalField>(`/menu-items/${menuItemId}/optional-fields`, data);
+) => client.post<MenuItemOptionalField>(`/menu-items/${menuItemId}/optionals`, data);
 
 export const deleteOptionalField = (menuItemId: string, fieldId: string) =>
-  client.delete(`/menu-items/${menuItemId}/optional-fields/${fieldId}`);
+  client.delete(`/menu-items/${menuItemId}/optionals/${fieldId}`);
