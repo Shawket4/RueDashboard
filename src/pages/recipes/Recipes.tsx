@@ -127,7 +127,7 @@ function AddonPicker({
                   <Check size={12}
                     className={`mr-2 ${a.id === value ? "opacity-100" : "opacity-0"}`} />
                   {a.name}
-                  <span className="ml-auto text-muted-foreground text-[10px]">{a.type}</span>
+                  <span className="ml-auto text-muted-foreground text-[10px]">{a.addon_type}</span>
                 </CommandItem>
               ))}
             </CommandGroup>
@@ -343,7 +343,7 @@ function SlotsPanel({ item, allAddons }: { item: MenuItem; allAddons: AddonItem[
   const knownTypes = Array.from(
     new Set([
       "milk_type", "coffee_type", "extra",
-      ...allAddons.map((a) => a.type),
+      ...allAddons.map((a) => a.addon_type),
       ...existingSlotTypes,
     ])
   ).filter(Boolean).sort();
@@ -403,7 +403,7 @@ function SlotsPanel({ item, allAddons }: { item: MenuItem; allAddons: AddonItem[
       ) : (
         <div className="space-y-2">
           {slots.map((slot) => {
-            const addonCount = allAddons.filter((a) => a.type === slot.addon_type && a.is_active).length;
+            const addonCount = allAddons.filter((a) => a.addon_type === slot.addon_type && a.is_active).length;
             return (
               <div key={slot.id}
                 className="flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-muted/30">
@@ -805,7 +805,7 @@ export default function Recipes() {
                         <button key={addon.id} onClick={() => setSelAddon(addon)}
                           className={`w-full text-left px-4 py-3 border-b border-border/50 hover:bg-muted/40 transition-colors ${selAddon?.id === addon.id ? "bg-accent" : ""}`}>
                           <p className="text-sm font-medium">{addon.name}</p>
-                          <p className="text-xs text-muted-foreground">{egp(addon.default_price)} · {addon.type}</p>
+                          <p className="text-xs text-muted-foreground">{egp(addon.default_price)} · {addon.addon_type}</p>
                         </button>
                       ))}
               </ScrollArea>

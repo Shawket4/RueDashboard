@@ -102,7 +102,7 @@ export interface AddonItem {
   org_id: string;
   name: string;
   // Now free text — no longer CHECK-constrained to 3 values
-  type: string;
+  addon_type: string;
   default_price: number; // piastres
   is_active: boolean;
   display_order: number;
