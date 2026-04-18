@@ -20,9 +20,10 @@ import {
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/shared/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
 import { EmptyState } from "@/shared/ui/empty-state";
+import { ImageUploader } from "@/shared/ui/image-uploader";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { categoryApi, menuItemApi, addonApi } from "@/entities/menu/api";
-import { useCategories, useMenuItems, useAddons } from "@/entities/menu/queries";
+import { useCategories, useMenuItems, useMenuItem, useAddons } from "@/entities/menu/queries";
 import {
   categorySchema, menuItemSchema, addonSchema,
   type CategoryValues, type MenuItemValues, type AddonValues,
@@ -114,6 +115,7 @@ function MenuItemDialog({
 }) {
   const { t } = useTranslation();
   const qc = useQueryClient();
+  const { data: liveItem } = useMenuItem(edit?.id ?? null);
 
   const form = useForm<MenuItemValues>({
     resolver: zodResolver(menuItemSchema),
@@ -148,6 +150,29 @@ function MenuItemDialog({
     onError: (e) => toast.error(getErrorMessage(e)),
   });
 
+  // ── Image upload wiring ──────────────────────────────────────────────────
+  // The backend upload endpoint (POST /uploads/menu-items/:id) requires the
+  // item to already exist, so in create mode we hide the uploader behind a
+  // hint. In edit mode we trust `edit.image_url` and let the ImageUploader
+  // own its own optimistic state; we just invalidate the list so any image
+  // column on the outer table refreshes.
+  const uploadImage = useMutation({
+    mutationFn: (file: File) => menuItemApi.uploadImage(edit!.id, file),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["menu-items"] });
+    },
+    onError: (e) => toast.error(getErrorMessage(e)),
+  });
+
+  const removeImage = useMutation({
+    mutationFn: () => menuItemApi.update(edit!.id, { image_url: null }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["menu-items"] });
+      toast.success(t("menu.itemDialog.imageRemoved"));
+    },
+    onError: (e) => toast.error(getErrorMessage(e)),
+  });
+
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent size="lg">
@@ -157,6 +182,25 @@ function MenuItemDialog({
         <Form {...form}>
           <form onSubmit={form.handleSubmit((v) => mutate(v))}>
             <DialogBody>
+              {/* Image — only shown in edit mode since upload requires an id */}
+              {edit ? (
+                <div className="space-y-1.5">
+                  <p className="text-sm font-medium">{t("menu.itemDialog.image")}</p>
+                  <ImageUploader
+                    value={liveItem?.image_url ?? edit.image_url}
+                    onUpload={async (file) => {
+                      const res = await uploadImage.mutateAsync(file);
+                      return res.image_url;
+                    }}
+                    onRemove={liveItem?.image_url || edit.image_url ? async () => { await removeImage.mutateAsync(); } : undefined}
+                    hint={t("menu.itemDialog.imageHint")}
+                  />
+                </div>
+              ) : (
+                <div className="rounded-lg border border-dashed bg-muted/30 p-3 text-xs text-muted-foreground">
+                  {t("menu.itemDialog.imageAfterSave")}
+                </div>
+              )}
               <FormField
                 control={form.control}
                 name="name"

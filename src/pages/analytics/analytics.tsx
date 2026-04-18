@@ -6,16 +6,18 @@ import {
   ResponsiveContainer, Tooltip as ReTooltip, XAxis, YAxis,
 } from "recharts";
 import {
-  BarChart2, Coffee, DollarSign, Package, Receipt, ShoppingBag,
+  BarChart2, Coffee, Package, Receipt, ShoppingBag,
   TrendingDown, TrendingUp, Users,
 } from "lucide-react";
 import { PageShell } from "@/shared/ui/page-shell";
 import { DataTable } from "@/shared/ui/data-table";
+import { Card, CardContent } from "@/shared/ui/card";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/shared/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
 import { Button } from "@/shared/ui/button";
+import { Progress } from "@/shared/ui/progress";
 import { StatCard } from "@/shared/ui/stat-card";
 import { DateRangePicker } from "@/shared/ui/date-range-picker";
 import { Badge } from "@/shared/ui/badge";
@@ -27,9 +29,7 @@ import {
 import { useBranches } from "@/entities/branch/queries";
 import { PAYMENT_COLORS, PAYMENT_METHODS } from "@/shared/config/constants";
 import { useCurrentContext } from "@/shared/hooks/use-current-context";
-import {
-  fmtMoney, fmtNumber, fmtPercent, fmtPeriod,
-} from "@/shared/lib/format";
+import { fmtMoney, fmtMoneyCompact, fmtNumber, fmtPercent, fmtPeriod, piastresToEgp } from "@/shared/lib/format";
 import { exportToExcel, talabatTotal } from "@/shared/lib/excel";
 import type {
   AddonSalesRow, BranchComparison, ItemSales, StockRow, TellerStats, TimeseriesPoint,
@@ -38,99 +38,49 @@ import type {
 type Granularity = "hourly" | "daily" | "monthly";
 type TabKey = "overview" | "revenue" | "items" | "tellers" | "branches" | "inventory";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Chart card — thin wrapper with the "rounded-2xl border p-5" treatment
-// from the original design.
-// ─────────────────────────────────────────────────────────────────────────────
-function ChartCard({
-  title, children, onExport,
-}: {
-  title: string;
-  children: React.ReactNode;
-  onExport?: () => void;
-}) {
+const CHART_HEIGHT = 300;
+
+function ChartCard({ title, children, onExport }: { title: string; children: React.ReactNode; onExport?: () => void }) {
   const { t } = useTranslation();
   return (
-    <div className="rounded-2xl border p-5">
-      <div className="flex items-center justify-between mb-4">
-        <p className="text-sm font-bold">{title}</p>
-        {onExport && (
-          <Button variant="ghost" size="sm" onClick={onExport}>
-            {t("common.export")}
-          </Button>
-        )}
-      </div>
-      {children}
-    </div>
+    <Card>
+      <CardContent className="p-4">
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-sm font-bold">{title}</p>
+          {onExport && <Button variant="ghost" size="sm" onClick={onExport}>{t("common.export")}</Button>}
+        </div>
+        {children}
+      </CardContent>
+    </Card>
   );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Loader — 4 skeleton rows (same shape as the original)
+// Overview Tab — KPIs + payment pie + top items progress
 // ─────────────────────────────────────────────────────────────────────────────
-const Loader = () => (
-  <div className="space-y-3">
-    {Array.from({ length: 4 }).map((_, i) => (
-      <Skeleton key={i} className="h-14 rounded-xl" />
-    ))}
-  </div>
-);
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Gradient defs for payment-method area fills. Must be unique per mount so
-// two charts on the same page don't collide.
-// ─────────────────────────────────────────────────────────────────────────────
-const PAYMENT_GRADIENTS = ["cash", "card", "talabat_online", "talabat_cash"] as const;
-
-function PaymentGradientDefs() {
-  return (
-    <defs>
-      {PAYMENT_GRADIENTS.map((m) => (
-        <linearGradient key={m} id={`grad-${m}`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="5%" stopColor={PAYMENT_COLORS[m]} stopOpacity={0.3} />
-          <stop offset="95%" stopColor={PAYMENT_COLORS[m]} stopOpacity={0} />
-        </linearGradient>
-      ))}
-    </defs>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Overview Tab
-// ─────────────────────────────────────────────────────────────────────────────
-function OverviewTab({
-  branchId, from, to,
-}: {
-  branchId: string;
-  from: string | null;
-  to: string | null;
-}) {
+function OverviewTab({ branchId, from, to }: { branchId: string; from: string | null; to: string | null }) {
   const { t } = useTranslation();
-  const params = { from, to };
-  const { data: sales, isLoading } = useBranchSales(branchId, params);
+  const { data: sales, isLoading } = useBranchSales(branchId, { from, to });
 
-  const paymentPie = useMemo(() => {
+  const pieData = useMemo(() => {
     if (!sales) return [];
     return PAYMENT_METHODS.map((pm) => ({
       name: t(`payments.${pm}`),
-      value:
+      value: piastresToEgp(
         pm === "cash" ? sales.cash_revenue :
         pm === "card" ? sales.card_revenue :
         pm === "digital_wallet" ? sales.digital_wallet_revenue :
-        pm === "mixed" ? sales.mixed_revenue :
         pm === "talabat_online" ? sales.talabat_online_revenue :
         pm === "talabat_cash" ? sales.talabat_cash_revenue : 0,
+      ),
       color: PAYMENT_COLORS[pm],
     })).filter((d) => d.value > 0);
   }, [sales, t]);
 
-  if (isLoading) {
-    return (
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-28 rounded-2xl" />)}
-      </div>
-    );
-  }
+  const topItems = sales?.top_items ?? [];
+  const totalTopRevenue = topItems.reduce((s, i) => s + i.revenue, 0);
+
+  if (isLoading) return <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-[300px] rounded-xl" />)}</div>;
   if (!sales) return <EmptyState icon={BarChart2} title={t("analytics.noData")} />;
 
   const aov = sales.total_orders > 0 ? sales.total_revenue / sales.total_orders : 0;
@@ -138,8 +88,8 @@ function OverviewTab({
   const voidRate = voidDenominator > 0 ? sales.voided_orders / voidDenominator : 0;
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <StatCard label={t("orders.totalRevenue")} value={fmtMoney(sales.total_revenue)} icon={Receipt} accent="success" />
         <StatCard label={t("orders.completed")} value={sales.total_orders} icon={ShoppingBag} accent="info" />
         <StatCard label={t("analytics.avgOrder")} value={fmtMoney(aov)} icon={TrendingUp} accent="violet" />
@@ -147,64 +97,39 @@ function OverviewTab({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Payment method donut — innerRadius={48} matches original */}
         <ChartCard title={t("analytics.revenueByPayment")}>
-          {paymentPie.length === 0 ? (
-            <p className="text-center text-muted-foreground text-sm py-10">{t("analytics.noData")}</p>
+          {pieData.length === 0 ? (
+            <EmptyState icon={Receipt} title={t("analytics.noData")} className="py-10" />
           ) : (
-            <ResponsiveContainer width="100%" height={220}>
+            <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
               <PieChart>
-                <Pie
-                  data={paymentPie}
-                  dataKey="value"
-                  nameKey="name"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={80}
-                  innerRadius={48}
-                >
-                  {paymentPie.map((entry, i) => (
-                    <Cell key={i} fill={entry.color} />
-                  ))}
+                <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} label={(e) => `${((e.percent ?? 0) * 100).toFixed(0)}%`}>
+                  {pieData.map((d, i) => <Cell key={i} fill={d.color} />)}
                 </Pie>
-                <ReTooltip formatter={(v: number) => fmtMoney(v)} />
-                <Legend formatter={(v) => <span className="text-xs">{v}</span>} />
+                <ReTooltip formatter={(v: number) => fmtMoney(v * 100)} />
+                <Legend />
               </PieChart>
             </ResponsiveContainer>
           )}
         </ChartCard>
 
-        {/* Top 5 items — progress bars with brand-gradient fill */}
         <ChartCard title={t("analytics.topItems")}>
-          {sales.top_items.length === 0 ? (
-            <p className="text-center text-muted-foreground text-sm py-10">{t("analytics.noData")}</p>
+          {topItems.length === 0 ? (
+            <EmptyState icon={Coffee} title={t("analytics.noData")} className="py-10" />
           ) : (
-            <div className="space-y-3">
-              {sales.top_items.slice(0, 5).map((item, i) => {
-                const share = sales.total_revenue > 0
-                  ? (item.revenue / sales.total_revenue) * 100
-                  : 0;
-                return (
-                  <div key={item.menu_item_id}>
-                    <div className="flex items-center justify-between mb-1">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span className="text-xs text-muted-foreground w-4 flex-shrink-0">#{i + 1}</span>
-                        <span className="text-sm font-medium truncate">{item.item_name}</span>
-                      </div>
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <span className="text-xs text-muted-foreground">{item.quantity_sold}x</span>
-                        <span className="text-sm font-bold tabular">{fmtMoney(item.revenue)}</span>
-                      </div>
-                    </div>
-                    <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-                      <div
-                        className="h-full brand-gradient rounded-full"
-                        style={{ width: `${share}%` }}
-                      />
-                    </div>
+            <div className="space-y-3 max-h-[280px] overflow-y-auto">
+              {topItems.slice(0, 10).map((i) => (
+                <div key={i.menu_item_id} className="space-y-1">
+                  <div className="flex justify-between text-sm">
+                    <span className="font-medium truncate me-2">{i.item_name}</span>
+                    <span className="tabular font-semibold">{fmtMoney(i.revenue)}</span>
                   </div>
-                );
-              })}
+                  <div className="flex items-center gap-2">
+                    <Progress value={totalTopRevenue ? (i.revenue / totalTopRevenue) * 100 : 0} className="flex-1" />
+                    <span className="text-xs text-muted-foreground tabular w-12 text-end">×{i.quantity_sold}</span>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </ChartCard>
@@ -214,7 +139,9 @@ function OverviewTab({
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Revenue Tab — the centerpiece chart (unstacked areas with gradient fills)
+// Revenue Tab — ONLY the Revenue Over Time chart, with the original's
+// gradient-area styling: filled, overlapping, semi-transparent fills that
+// blend visually where they overlap.
 // ─────────────────────────────────────────────────────────────────────────────
 function RevenueTab({
   branchId, from, to, granularity,
@@ -225,8 +152,7 @@ function RevenueTab({
   granularity: Granularity;
 }) {
   const { t } = useTranslation();
-  const params = { from, to, granularity };
-  const { data: ts = [], isLoading } = useBranchTimeseries(branchId, params);
+  const { data: ts = [], isLoading } = useBranchTimeseries(branchId, { from, to, granularity });
   const { data: sales } = useBranchSales(branchId, { from, to });
 
   const chartData = useMemo(
@@ -236,8 +162,6 @@ function RevenueTab({
     })),
     [ts, granularity],
   );
-
-  const hasDiscounts = chartData.some((p) => p.discount > 0);
 
   const handleExport = () =>
     exportToExcel({
@@ -252,6 +176,7 @@ function RevenueTab({
           { key: "voided", header: t("orderStatus.voided"), accessor: (p: TimeseriesPoint) => p.voided, type: "integer", width: 12, total: true },
           { key: "cash", header: t("payments.cash"), accessor: (p: TimeseriesPoint) => p.cash_revenue, type: "money", width: 14, total: true },
           { key: "card", header: t("payments.card"), accessor: (p: TimeseriesPoint) => p.card_revenue, type: "money", width: 14, total: true },
+          { key: "dw", header: t("payments.digital_wallet"), accessor: (p: TimeseriesPoint) => p.digital_wallet_revenue, type: "money", width: 14, total: true },
           { key: "tOn", header: t("payments.talabat_online"), accessor: (p: TimeseriesPoint) => p.talabat_online_revenue, type: "money", width: 14, total: true },
           { key: "tCash", header: t("payments.talabat_cash"), accessor: (p: TimeseriesPoint) => p.talabat_cash_revenue, type: "money", width: 14, total: true },
           { key: "tTot", header: t("payments.talabat_total"), accessor: (p: TimeseriesPoint) => talabatTotal(p), type: "moneyRaw", width: 14, total: true },
@@ -261,14 +186,8 @@ function RevenueTab({
       }],
     });
 
-  if (isLoading) return <Skeleton className="h-72 rounded-2xl" />;
-  if (chartData.length === 0) {
-    return (
-      <div className="rounded-2xl border p-12 text-center text-muted-foreground text-sm">
-        {t("analytics.noData")}
-      </div>
-    );
-  }
+  if (isLoading) return <Skeleton className="h-[360px] rounded-xl" />;
+  if (chartData.length === 0) return <EmptyState icon={BarChart2} title={t("analytics.noData")} />;
 
   return (
     <div className="space-y-4">
@@ -281,11 +200,29 @@ function RevenueTab({
         </div>
       )}
 
-      {/* Revenue area chart — unstacked multi-line with gradient fills */}
+      {/*
+       * Revenue Over Time — the one chart styled after the original dashboard.
+       *
+       * Each payment method renders as its own <Area>, drawn on top of the
+       * previous one with a semi-transparent gradient fill. Where areas
+       * overlap, the fills blend visually — no stacking, no aggregation.
+       * Talabat Online and Talabat Cash stay split per the business rule.
+       *
+       * The gradient goes from 0.55 opacity at the top to 0.15 at the bottom
+       * (rather than fading to 0) so the fills are actually visible. At 0.15
+       * the overlapped regions mix their colors visibly.
+       */}
       <ChartCard title={t("analytics.revenueOverTime")} onExport={handleExport}>
-        <ResponsiveContainer width="100%" height={280}>
-          <AreaChart data={chartData}>
-            <PaymentGradientDefs />
+        <ResponsiveContainer width="100%" height={320}>
+          <AreaChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
+            <defs>
+              {(["cash", "card", "digital_wallet", "talabat_online", "talabat_cash"] as const).map((m) => (
+                <linearGradient key={m} id={`grad-${m}`} x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={PAYMENT_COLORS[m]} stopOpacity={0.55} />
+                  <stop offset="100%" stopColor={PAYMENT_COLORS[m]} stopOpacity={0.15} />
+                </linearGradient>
+              ))}
+            </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
             <XAxis dataKey="period" tick={{ fontSize: 11 }} />
             <YAxis tickFormatter={(v) => `${(v / 100).toFixed(0)}`} tick={{ fontSize: 11 }} />
@@ -296,100 +233,67 @@ function RevenueTab({
               dataKey="cash_revenue"
               name={t("payments.cash")}
               stroke={PAYMENT_COLORS.cash}
-              fill="url(#grad-cash)"
               strokeWidth={2}
+              fill="url(#grad-cash)"
             />
             <Area
               type="monotone"
               dataKey="card_revenue"
               name={t("payments.card")}
               stroke={PAYMENT_COLORS.card}
-              fill="url(#grad-card)"
               strokeWidth={2}
+              fill="url(#grad-card)"
+            />
+            <Area
+              type="monotone"
+              dataKey="digital_wallet_revenue"
+              name={t("payments.digital_wallet")}
+              stroke={PAYMENT_COLORS.digital_wallet}
+              strokeWidth={2}
+              fill="url(#grad-digital_wallet)"
             />
             <Area
               type="monotone"
               dataKey="talabat_online_revenue"
               name={t("payments.talabat_online")}
               stroke={PAYMENT_COLORS.talabat_online}
-              fill="url(#grad-talabat_online)"
               strokeWidth={2}
+              fill="url(#grad-talabat_online)"
             />
             <Area
               type="monotone"
               dataKey="talabat_cash_revenue"
               name={t("payments.talabat_cash")}
               stroke={PAYMENT_COLORS.talabat_cash}
-              fill="url(#grad-talabat_cash)"
               strokeWidth={2}
+              fill="url(#grad-talabat_cash)"
             />
           </AreaChart>
         </ResponsiveContainer>
       </ChartCard>
-
-      {/* Orders bar chart with rounded corners */}
-      <ChartCard title={t("analytics.ordersOverTime")}>
-        <ResponsiveContainer width="100%" height={200}>
-          <BarChart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-            <XAxis dataKey="period" tick={{ fontSize: 11 }} />
-            <YAxis tick={{ fontSize: 11 }} />
-            <ReTooltip content={<ChartTooltip valueFormat="number" />} />
-            <Legend formatter={(v) => <span className="text-xs">{v}</span>} />
-            <Bar dataKey="orders" name={t("dashboard.orders")} fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="voided" name={t("orderStatus.voided")} fill="hsl(var(--destructive))" radius={[4, 4, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
-      </ChartCard>
-
-      {/* Discount bar chart — only if any period has a discount */}
-      {hasDiscounts && (
-        <ChartCard title={t("analytics.discountsOverTime")}>
-          <ResponsiveContainer width="100%" height={180}>
-            <BarChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis dataKey="period" tick={{ fontSize: 11 }} />
-              <YAxis tickFormatter={(v) => `${(v / 100).toFixed(0)}`} tick={{ fontSize: 11 }} />
-              <ReTooltip content={<ChartTooltip valueFormat="money" />} />
-              <Bar dataKey="discount" name={t("orders.discount")} fill="hsl(38 80% 50%)" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </ChartCard>
-      )}
     </div>
   );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Items Tab — DataTable + category progress bars + addon sales list
+// Items Tab — table + categories + addon sales (clean card-based)
 // ─────────────────────────────────────────────────────────────────────────────
-function ItemsTab({
-  branchId, from, to,
-}: {
-  branchId: string;
-  from: string | null;
-  to: string | null;
-}) {
+function ItemsTab({ branchId, from, to }: { branchId: string; from: string | null; to: string | null }) {
   const { t } = useTranslation();
-  const params = { from, to };
-  const { data: sales, isLoading } = useBranchSales(branchId, params);
-  const { data: addons = [] } = useBranchAddons(branchId, params);
+  const { data: sales, isLoading } = useBranchSales(branchId, { from, to });
+  const { data: addons = [] } = useBranchAddons(branchId, { from, to });
 
-  const itemCols: ColumnDef<ItemSales>[] = [
-    { accessorKey: "item_name", header: t("common.name"),
-      cell: ({ row }) => <span className="font-semibold text-sm">{row.original.item_name}</span> },
-    { accessorKey: "quantity_sold", header: t("common.qty"),
-      cell: ({ row }) => <span className="tabular text-sm">{fmtNumber(row.original.quantity_sold)}</span> },
-    { accessorKey: "revenue", header: t("orders.totalRevenue"),
-      cell: ({ row }) => <span className="tabular font-semibold text-sm">{fmtMoney(row.original.revenue)}</span> },
-    { id: "share", header: t("analytics.share"),
-      cell: ({ row }) => (
-        <span className="text-xs text-muted-foreground tabular">
-          {sales && sales.total_revenue > 0
-            ? fmtPercent(row.original.revenue / sales.total_revenue)
-            : "—"}
-        </span>
-      ) },
+  const cols: ColumnDef<ItemSales>[] = [
+    { accessorKey: "item_name", header: t("common.name"), cell: ({ row }) => <span className="font-semibold text-sm">{row.original.item_name}</span> },
+    { accessorKey: "quantity_sold", header: t("common.qty"), cell: ({ row }) => <span className="tabular text-sm">{fmtNumber(row.original.quantity_sold)}</span> },
+    { accessorKey: "revenue", header: t("orders.totalRevenue"), cell: ({ row }) => <span className="tabular font-semibold text-sm">{fmtMoney(row.original.revenue)}</span> },
+  ];
+
+  const addonCols: ColumnDef<AddonSalesRow>[] = [
+    { accessorKey: "addon_name", header: t("common.name"), cell: ({ row }) => <span className="font-semibold text-sm">{row.original.addon_name}</span> },
+    { accessorKey: "addon_type", header: t("common.type"), cell: ({ row }) => <Badge variant="outline">{t(`menu.addonTypes.${row.original.addon_type}`, { defaultValue: row.original.addon_type })}</Badge> },
+    { accessorKey: "quantity_sold", header: t("common.qty"), cell: ({ row }) => <span className="tabular text-sm">{fmtNumber(row.original.quantity_sold)}</span> },
+    { accessorKey: "revenue", header: t("orders.totalRevenue"), cell: ({ row }) => <span className="tabular font-semibold text-sm">{fmtMoney(row.original.revenue)}</span> },
   ];
 
   const exportItems = () => {
@@ -424,69 +328,37 @@ function ItemsTab({
     });
   };
 
-  if (isLoading) return <Loader />;
-  if (!sales) return <EmptyState icon={Coffee} title={t("analytics.noData")} />;
+  if (isLoading) return <Skeleton className="h-96 rounded-xl" />;
+  if (!sales || sales.top_items.length === 0) return <EmptyState icon={Coffee} title={t("analytics.noData")} />;
+
+  const totalCatRevenue = sales.by_category.reduce((s, c) => s + c.revenue, 0);
 
   return (
     <div className="space-y-4">
       <ChartCard title={t("analytics.topItemsRev")} onExport={exportItems}>
-        <DataTable columns={itemCols} data={sales.top_items} searchKey="item_name" pageSize={10} />
+        <DataTable columns={cols} data={sales.top_items} searchKey="item_name" pageSize={10} />
       </ChartCard>
 
-      {/* Category progress bars with brand-gradient fill */}
       <ChartCard title={t("analytics.byCategory")}>
         <div className="space-y-3">
-          {sales.by_category.map((cat) => {
-            const share = sales.total_revenue > 0
-              ? (cat.revenue / sales.total_revenue) * 100
-              : 0;
-            return (
-              <div key={cat.category_id ?? "uncategorised"}>
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm font-medium truncate">
-                    {cat.category_name ?? t("menu.uncategorised")}
-                  </span>
-                  <div className="flex items-center gap-3 flex-shrink-0">
-                    <span className="text-xs text-muted-foreground">
-                      {cat.quantity_sold} {t("analytics.sold")}
-                    </span>
-                    <span className="font-bold tabular text-sm">{fmtMoney(cat.revenue)}</span>
-                  </div>
-                </div>
-                <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-                  <div
-                    className="h-full brand-gradient rounded-full"
-                    style={{ width: `${share}%` }}
-                  />
-                </div>
+          {sales.by_category.map((c) => (
+            <div key={c.category_id ?? "none"} className="space-y-1">
+              <div className="flex justify-between text-sm">
+                <span className="font-medium">
+                  {c.category_name ?? t("menu.uncategorised")}
+                  <span className="text-muted-foreground text-xs ms-2">×{c.quantity_sold}</span>
+                </span>
+                <span className="tabular font-semibold">{fmtMoney(c.revenue)}</span>
               </div>
-            );
-          })}
+              <Progress value={totalCatRevenue ? (c.revenue / totalCatRevenue) * 100 : 0} />
+            </div>
+          ))}
         </div>
       </ChartCard>
 
-      {/* Addon sales list — flat row with type badge, exactly as original */}
       {addons.length > 0 && (
         <ChartCard title={t("analytics.addonSales")}>
-          <div className="space-y-2 max-h-[420px] overflow-y-auto">
-            {addons.slice(0, 15).map((a) => (
-              <div
-                key={a.addon_item_id}
-                className="flex items-center justify-between py-2 border-b border-border/50 last:border-0"
-              >
-                <div className="min-w-0 flex items-center gap-2">
-                  <span className="text-sm font-medium truncate">{a.addon_name}</span>
-                  <Badge variant="info" className="text-[10px]">
-                    {t(`menu.addonTypes.${a.addon_type}`, { defaultValue: a.addon_type })}
-                  </Badge>
-                </div>
-                <div className="flex items-center gap-3 flex-shrink-0">
-                  <span className="text-xs text-muted-foreground">{a.quantity_sold}x</span>
-                  <span className="font-semibold tabular text-sm">{fmtMoney(a.revenue)}</span>
-                </div>
-              </div>
-            ))}
-          </div>
+          <DataTable columns={addonCols} data={addons} searchKey="addon_name" pageSize={10} />
         </ChartCard>
       )}
     </div>
@@ -494,36 +366,21 @@ function ItemsTab({
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Tellers Tab — horizontal bar + DataTable
+// Tellers Tab
 // ─────────────────────────────────────────────────────────────────────────────
-function TellersTab({
-  branchId, from, to,
-}: {
-  branchId: string;
-  from: string | null;
-  to: string | null;
-}) {
+function TellersTab({ branchId, from, to }: { branchId: string; from: string | null; to: string | null }) {
   const { t } = useTranslation();
-  const params = { from, to };
-  const { data: tellers = [], isLoading } = useBranchTellers(branchId, params);
+  const { data: tellers = [], isLoading } = useBranchTellers(branchId, { from, to });
+
+  const chartData = tellers.map((t2) => ({ name: t2.teller_name, revenue: piastresToEgp(t2.revenue), orders: t2.orders }));
 
   const cols: ColumnDef<TellerStats>[] = [
-    { accessorKey: "teller_name", header: t("common.name"),
-      cell: ({ row }) => <span className="font-semibold text-sm">{row.original.teller_name}</span> },
-    { accessorKey: "orders", header: t("dashboard.orders"),
-      cell: ({ row }) => <span className="tabular">{row.original.orders}</span> },
-    { accessorKey: "voided", header: t("orderStatus.voided"),
-      cell: ({ row }) => (
-        <span className={row.original.voided > 0 ? "text-destructive font-semibold" : "text-muted-foreground"}>
-          {row.original.voided}
-        </span>
-      ) },
-    { accessorKey: "shifts", header: t("nav.shifts"),
-      cell: ({ row }) => <span className="tabular">{row.original.shifts}</span> },
-    { accessorKey: "avg_order_value", header: t("analytics.aov"),
-      cell: ({ row }) => <span className="tabular">{fmtMoney(row.original.avg_order_value)}</span> },
-    { accessorKey: "revenue", header: t("orders.totalRevenue"),
-      cell: ({ row }) => <span className="tabular font-semibold">{fmtMoney(row.original.revenue)}</span> },
+    { accessorKey: "teller_name", header: t("common.name"), cell: ({ row }) => <span className="font-semibold text-sm">{row.original.teller_name}</span> },
+    { accessorKey: "orders", header: t("dashboard.orders") },
+    { accessorKey: "voided", header: t("orderStatus.voided"), cell: ({ row }) => <span className={row.original.voided > 0 ? "text-destructive" : ""}>{row.original.voided}</span> },
+    { accessorKey: "shifts", header: t("nav.shifts") },
+    { accessorKey: "avg_order_value", header: t("analytics.aov"), cell: ({ row }) => <span className="tabular">{fmtMoney(row.original.avg_order_value)}</span> },
+    { accessorKey: "revenue", header: t("orders.totalRevenue"), cell: ({ row }) => <span className="tabular font-semibold">{fmtMoney(row.original.revenue)}</span> },
   ];
 
   const handleExport = () =>
@@ -545,19 +402,19 @@ function TellersTab({
       }],
     });
 
-  if (isLoading) return <Loader />;
+  if (isLoading) return <Skeleton className="h-96 rounded-xl" />;
   if (tellers.length === 0) return <EmptyState icon={Users} title={t("analytics.noData")} />;
 
   return (
     <div className="space-y-4">
-      <ChartCard title={t("analytics.revenueByTeller")}>
-        <ResponsiveContainer width="100%" height={220}>
-          <BarChart data={tellers.slice(0, 8)} layout="vertical">
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
-            <XAxis type="number" tickFormatter={(v) => `${(v / 100).toFixed(0)}`} tick={{ fontSize: 11 }} />
-            <YAxis type="category" dataKey="teller_name" tick={{ fontSize: 11 }} width={90} />
+      <ChartCard title={t("analytics.revenueByTeller")} onExport={handleExport}>
+        <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
+          <BarChart data={chartData} layout="vertical">
+            <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+            <XAxis type="number" fontSize={10} tickFormatter={(v) => fmtMoneyCompact(v * 100)} />
+            <YAxis type="category" dataKey="name" fontSize={10} width={100} />
             <ReTooltip content={<ChartTooltip valueFormat="money" />} />
-            <Bar dataKey="revenue" name={t("orders.totalRevenue")} fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+            <Bar dataKey="revenue" fill="hsl(var(--primary))" />
           </BarChart>
         </ResponsiveContainer>
       </ChartCard>
@@ -568,46 +425,31 @@ function TellersTab({
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Branches Tab — stacked payment bars (Talabat still split) + table
+// Branches Tab — stacked bar keeps Talabat split to avoid double-counting
 // ─────────────────────────────────────────────────────────────────────────────
-function BranchesTab({
-  orgId, from, to,
-}: {
-  orgId: string;
-  from: string | null;
-  to: string | null;
-}) {
+function BranchesTab({ orgId, from, to }: { orgId: string; from: string | null; to: string | null }) {
   const { t } = useTranslation();
   const { data: report, isLoading } = useOrgComparison(orgId, { from, to });
 
   const cols: ColumnDef<BranchComparison>[] = [
-    { accessorKey: "branch_name", header: t("common.name"),
-      cell: ({ row }) => <span className="font-semibold text-sm">{row.original.branch_name}</span> },
-    { accessorKey: "total_orders", header: t("dashboard.orders"),
-      cell: ({ row }) => <span className="tabular">{row.original.total_orders}</span> },
-    { accessorKey: "voided_orders", header: t("orderStatus.voided"),
-      cell: ({ row }) => (
-        <span className={row.original.voided_orders > 0 ? "text-destructive" : "text-muted-foreground"}>
-          {row.original.voided_orders}
-        </span>
-      ) },
-    { accessorKey: "avg_order_value", header: t("analytics.aov"),
-      cell: ({ row }) => <span className="tabular text-xs">{fmtMoney(row.original.avg_order_value)}</span> },
-    { accessorKey: "cash_revenue", header: t("payments.cash"),
-      cell: ({ row }) => <span className="tabular text-xs">{fmtMoney(row.original.cash_revenue)}</span> },
-    { accessorKey: "card_revenue", header: t("payments.card"),
-      cell: ({ row }) => <span className="tabular text-xs">{fmtMoney(row.original.card_revenue)}</span> },
-    { id: "talabat_total", header: t("payments.talabat_total"),
-      cell: ({ row }) => <span className="tabular text-xs">{fmtMoney(talabatTotal(row.original))}</span> },
-    { accessorKey: "total_revenue", header: t("orders.totalRevenue"),
-      cell: ({ row }) => <span className="tabular font-semibold text-sm">{fmtMoney(row.original.total_revenue)}</span> },
-    { accessorKey: "void_rate_pct", header: t("analytics.voidRate"),
-      cell: ({ row }) => (
-        <span className={`tabular text-xs ${row.original.void_rate_pct > 5 ? "text-destructive font-semibold" : "text-muted-foreground"}`}>
-          {row.original.void_rate_pct.toFixed(1)}%
-        </span>
-      ) },
+    { accessorKey: "branch_name", header: t("common.name"), cell: ({ row }) => <span className="font-semibold text-sm">{row.original.branch_name}</span> },
+    { accessorKey: "total_orders", header: t("dashboard.orders") },
+    { accessorKey: "voided_orders", header: t("orderStatus.voided") },
+    { accessorKey: "avg_order_value", header: t("analytics.aov"), cell: ({ row }) => <span className="tabular">{fmtMoney(row.original.avg_order_value)}</span> },
+    { accessorKey: "cash_revenue", header: t("payments.cash"), cell: ({ row }) => <span className="tabular text-sm">{fmtMoney(row.original.cash_revenue)}</span> },
+    { accessorKey: "card_revenue", header: t("payments.card"), cell: ({ row }) => <span className="tabular text-sm">{fmtMoney(row.original.card_revenue)}</span> },
+    { id: "talabat_total", header: t("payments.talabat_total"), cell: ({ row }) => <span className="tabular text-sm">{fmtMoney(talabatTotal(row.original))}</span> },
+    { accessorKey: "total_revenue", header: t("orders.totalRevenue"), cell: ({ row }) => <span className="tabular font-semibold text-sm">{fmtMoney(row.original.total_revenue)}</span> },
   ];
+
+  const chartData = report?.branches.map((b) => ({
+    name: b.branch_name,
+    cash: piastresToEgp(b.cash_revenue),
+    card: piastresToEgp(b.card_revenue),
+    dw: piastresToEgp(b.digital_wallet_revenue),
+    tOn: piastresToEgp(b.talabat_online_revenue),
+    tCash: piastresToEgp(b.talabat_cash_revenue),
+  })) ?? [];
 
   const handleExport = () => {
     if (!report) return;
@@ -635,35 +477,35 @@ function BranchesTab({
     });
   };
 
-  if (isLoading) return <Loader />;
+  if (isLoading) return <Skeleton className="h-96 rounded-xl" />;
   if (!report || report.branches.length === 0) return <EmptyState icon={BarChart2} title={t("analytics.noData")} />;
 
   return (
     <div className="space-y-4">
       <ChartCard title={t("analytics.revenueByBranch")} onExport={handleExport}>
-        <ResponsiveContainer width="100%" height={260}>
-          <BarChart data={report.branches}>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-            <XAxis dataKey="branch_name" tick={{ fontSize: 11 }} />
-            <YAxis tickFormatter={(v) => `${(v / 100).toFixed(0)}`} tick={{ fontSize: 11 }} />
+        <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
+          <BarChart data={chartData}>
+            <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+            <XAxis dataKey="name" fontSize={10} />
+            <YAxis fontSize={10} tickFormatter={(v) => fmtMoneyCompact(v * 100)} />
             <ReTooltip content={<ChartTooltip valueFormat="money" />} />
-            <Legend formatter={(v) => <span className="text-xs">{v}</span>} />
-            <Bar dataKey="cash_revenue" name={t("payments.cash")} stackId="a" fill={PAYMENT_COLORS.cash} />
-            <Bar dataKey="card_revenue" name={t("payments.card")} stackId="a" fill={PAYMENT_COLORS.card} />
-            <Bar dataKey="digital_wallet_revenue" name={t("payments.digital_wallet")} stackId="a" fill={PAYMENT_COLORS.digital_wallet} />
-            <Bar dataKey="talabat_online_revenue" name={t("payments.talabat_online")} stackId="a" fill={PAYMENT_COLORS.talabat_online} />
-            <Bar dataKey="talabat_cash_revenue" name={t("payments.talabat_cash")} stackId="a" fill={PAYMENT_COLORS.talabat_cash} radius={[4, 4, 0, 0]} />
+            <Legend />
+            <Bar dataKey="cash" stackId="a" name={t("payments.cash")} fill={PAYMENT_COLORS.cash} />
+            <Bar dataKey="card" stackId="a" name={t("payments.card")} fill={PAYMENT_COLORS.card} />
+            <Bar dataKey="dw" stackId="a" name={t("payments.digital_wallet")} fill={PAYMENT_COLORS.digital_wallet} />
+            <Bar dataKey="tOn" stackId="a" name={t("payments.talabat_online")} fill={PAYMENT_COLORS.talabat_online} />
+            <Bar dataKey="tCash" stackId="a" name={t("payments.talabat_cash")} fill={PAYMENT_COLORS.talabat_cash} />
           </BarChart>
         </ResponsiveContainer>
       </ChartCard>
 
-      <DataTable columns={cols} data={report.branches} searchKey="branch_name" onExport={handleExport} />
+      <DataTable columns={cols} data={report.branches} onExport={handleExport} searchKey="branch_name" />
     </div>
   );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Inventory Tab — stock list with coloured progress bars
+// Inventory Tab — stock bars
 // ─────────────────────────────────────────────────────────────────────────────
 function InventoryTab({ branchId }: { branchId: string }) {
   const { t } = useTranslation();
@@ -681,61 +523,32 @@ function InventoryTab({ branchId }: { branchId: string }) {
           { key: "unit", header: "Unit", accessor: (s: StockRow) => s.unit, width: 10 },
           { key: "stock", header: t("inventory.stock.currentStock"), accessor: (s: StockRow) => Number(s.current_stock), type: "number", width: 14 },
           { key: "threshold", header: t("inventory.stock.reorderAt"), accessor: (s: StockRow) => Number(s.reorder_threshold), type: "number", width: 14 },
-          { key: "low", header: t("common.status"), accessor: (s: StockRow) => (s.below_reorder ? t("inventory.stock.low") : t("inventory.stock.ok")), width: 12 },
+          { key: "low", header: t("common.status"), accessor: (s: StockRow) => s.below_reorder ? t("inventory.stock.low") : t("inventory.stock.ok"), width: 12 },
         ],
         rows: report.items,
       }],
     });
   };
 
-  if (isLoading) return <Loader />;
+  if (isLoading) return <Skeleton className="h-96 rounded-xl" />;
   if (!report || report.items.length === 0) return <EmptyState icon={Package} title={t("analytics.noData")} />;
-
-  const lowCount = report.items.filter((i) => i.below_reorder).length;
-
-  // Sort: low-stock items first so they're easy to spot
-  const sorted = [...report.items].sort(
-    (a, b) => Number(b.below_reorder) - Number(a.below_reorder),
-  );
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatCard label={t("inventory.catalog.title")} value={report.items.length} icon={Package} />
-        <StatCard label={t("dashboard.lowStock")} value={lowCount} icon={DollarSign} accent="warning" />
-        <StatCard label={t("inventory.stock.ok")} value={report.items.length - lowCount} accent="success" />
-        <StatCard label={t("analytics.lowRatio")} value={report.items.length > 0 ? fmtPercent(lowCount / report.items.length) : "0%"} />
-      </div>
-
       <ChartCard title={t("analytics.stockLevels")} onExport={handleExport}>
-        <div className="space-y-3 max-h-[520px] overflow-y-auto pr-2">
-          {sorted.map((item) => {
-            const pctVal = item.reorder_threshold > 0
-              ? Math.min(100, (Number(item.current_stock) / Math.max(Number(item.reorder_threshold) * 2, 1)) * 100)
-              : 100;
+        <div className="space-y-3 max-h-[520px] overflow-y-auto">
+          {report.items.map((r) => {
+            const pct = r.reorder_threshold > 0 ? Math.min(100, (Number(r.current_stock) / (Number(r.reorder_threshold) * 2)) * 100) : 100;
             return (
-              <div key={item.branch_inventory_id} className="flex items-center gap-4">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-sm font-medium truncate">{item.ingredient_name}</span>
-                    {item.below_reorder && (
-                      <Badge variant="warning" className="text-[10px] h-4">
-                        {t("inventory.stock.low")}
-                      </Badge>
-                    )}
-                  </div>
+              <div key={r.branch_inventory_id} className="space-y-1">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="font-medium">{r.ingredient_name}</span>
                   <div className="flex items-center gap-2">
-                    <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
-                      <div
-                        className={`h-full rounded-full ${item.below_reorder ? "bg-amber-500" : "brand-gradient"}`}
-                        style={{ width: `${pctVal}%` }}
-                      />
-                    </div>
-                    <span className="text-xs text-muted-foreground whitespace-nowrap tabular">
-                      {Number(item.current_stock).toFixed(2)} / {Number(item.reorder_threshold).toFixed(2)} {item.unit}
-                    </span>
+                    {r.below_reorder && <Badge variant="destructive" className="text-[10px]">{t("inventory.stock.low")}</Badge>}
+                    <span className="tabular text-xs">{Number(r.current_stock).toFixed(2)} / {Number(r.reorder_threshold).toFixed(2)} {r.unit}</span>
                   </div>
                 </div>
+                <Progress value={pct} className={r.below_reorder ? "[&>div]:bg-destructive" : ""} />
               </div>
             );
           })}
@@ -764,100 +577,62 @@ export default function Analytics() {
 
   const canCompareBranches = (isSuperAdmin || isOrgAdmin) && branches.length > 1;
 
-  if (!orgId) {
-    return <PageShell title={t("analytics.title")} description={t("analytics.subtitle")}>{null}</PageShell>;
-  }
+  if (!orgId) return <PageShell title={t("analytics.title")} description={t("analytics.subtitle")}>{null}</PageShell>;
 
   return (
-    <PageShell
-      title={t("analytics.title")}
-      description={branches.find((b) => b.id === selBranch)?.name ?? t("analytics.subtitle")}
-      action={
-        branches.length > 1 && (
-          <Select value={selBranch} onValueChange={setSelBranch}>
-            <SelectTrigger className="w-44 h-9"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {branches.map((b) => <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        )
-      }
-    >
-      {/* Date range — above tabs, matches original layout */}
-      <DateRangePicker from={from} to={to} onChange={(f, tt) => { setFrom(f); setTo(tt); }} />
+    <PageShell title={t("analytics.title")} description={t("analytics.subtitle")}>
+      <Card>
+        <CardContent className="p-4 space-y-3">
+          <div className="flex items-center gap-2 flex-wrap">
+            <Select value={selBranch} onValueChange={setSelBranch}>
+              <SelectTrigger className="h-9 w-48"><SelectValue /></SelectTrigger>
+              <SelectContent>{branches.map((b) => <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>)}</SelectContent>
+            </Select>
+            <div className="flex rounded-lg border p-0.5 bg-muted">
+              {(["hourly", "daily", "monthly"] as const).map((g) => (
+                <button
+                  key={g}
+                  onClick={() => setGran(g)}
+                  className={`px-3 py-1 text-xs rounded ${gran === g ? "bg-background shadow-sm font-semibold" : "text-muted-foreground"}`}
+                >
+                  {t(`analytics.granularity.${g}`)}
+                </button>
+              ))}
+            </div>
+          </div>
+          <DateRangePicker from={from} to={to} onChange={(f, tt) => { setFrom(f); setTo(tt); }} />
+        </CardContent>
+      </Card>
 
       {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
       <Tabs value={tab} onValueChange={(v: any) => setTab(v)}>
         <TabsList className="flex-wrap h-auto gap-1">
-          <TabsTrigger value="overview">
-            <BarChart2 size={13} /> {t("analytics.tabs.overview")}
-          </TabsTrigger>
-          <TabsTrigger value="revenue">
-            <TrendingUp size={13} /> {t("analytics.tabs.revenue")}
-          </TabsTrigger>
-          <TabsTrigger value="items">
-            <Coffee size={13} /> {t("analytics.tabs.items")}
-          </TabsTrigger>
-          <TabsTrigger value="tellers">
-            <Users size={13} /> {t("analytics.tabs.tellers")}
-          </TabsTrigger>
-          {canCompareBranches && (
-            <TabsTrigger value="branches">
-              <BarChart2 size={13} /> {t("analytics.tabs.branches")}
-            </TabsTrigger>
-          )}
-          <TabsTrigger value="inventory">
-            <Package size={13} /> {t("analytics.tabs.inventory")}
-          </TabsTrigger>
+          <TabsTrigger value="overview">{t("analytics.tabs.overview")}</TabsTrigger>
+          <TabsTrigger value="revenue">{t("analytics.tabs.revenue")}</TabsTrigger>
+          <TabsTrigger value="items">{t("analytics.tabs.items")}</TabsTrigger>
+          <TabsTrigger value="tellers">{t("analytics.tabs.tellers")}</TabsTrigger>
+          {canCompareBranches && <TabsTrigger value="branches">{t("analytics.tabs.branches")}</TabsTrigger>}
+          <TabsTrigger value="inventory">{t("analytics.tabs.inventory")}</TabsTrigger>
         </TabsList>
-
         <TabsContent value="overview">
-          {selBranch
-            ? <OverviewTab branchId={selBranch} from={from} to={to} />
-            : <EmptyState icon={BarChart2} title={t("orders.selectBranch")} />}
+          {selBranch ? <OverviewTab branchId={selBranch} from={from} to={to} /> : <EmptyState icon={BarChart2} title={t("orders.selectBranch")} />}
         </TabsContent>
-
-        <TabsContent value="revenue" className="space-y-4">
-          {/* Granularity toggle — individual buttons, original style */}
-          <div className="flex items-center gap-2 flex-wrap">
-            {(["hourly", "daily", "monthly"] as const).map((g) => (
-              <Button
-                key={g}
-                variant={gran === g ? "default" : "outline"}
-                size="sm"
-                onClick={() => setGran(g)}
-              >
-                {t(`analytics.granularity.${g}`)}
-              </Button>
-            ))}
-          </div>
-          {selBranch
-            ? <RevenueTab branchId={selBranch} from={from} to={to} granularity={gran} />
-            : <EmptyState icon={BarChart2} title={t("orders.selectBranch")} />}
+        <TabsContent value="revenue">
+          {selBranch ? <RevenueTab branchId={selBranch} from={from} to={to} granularity={gran} /> : <EmptyState icon={BarChart2} title={t("orders.selectBranch")} />}
         </TabsContent>
-
         <TabsContent value="items">
-          {selBranch
-            ? <ItemsTab branchId={selBranch} from={from} to={to} />
-            : <EmptyState icon={Coffee} title={t("orders.selectBranch")} />}
+          {selBranch ? <ItemsTab branchId={selBranch} from={from} to={to} /> : <EmptyState icon={Coffee} title={t("orders.selectBranch")} />}
         </TabsContent>
-
         <TabsContent value="tellers">
-          {selBranch
-            ? <TellersTab branchId={selBranch} from={from} to={to} />
-            : <EmptyState icon={Users} title={t("orders.selectBranch")} />}
+          {selBranch ? <TellersTab branchId={selBranch} from={from} to={to} /> : <EmptyState icon={Users} title={t("orders.selectBranch")} />}
         </TabsContent>
-
         {canCompareBranches && (
           <TabsContent value="branches">
             <BranchesTab orgId={orgId} from={from} to={to} />
           </TabsContent>
         )}
-
         <TabsContent value="inventory">
-          {selBranch
-            ? <InventoryTab branchId={selBranch} />
-            : <EmptyState icon={Package} title={t("orders.selectBranch")} />}
+          {selBranch ? <InventoryTab branchId={selBranch} /> : <EmptyState icon={Package} title={t("orders.selectBranch")} />}
         </TabsContent>
       </Tabs>
     </PageShell>

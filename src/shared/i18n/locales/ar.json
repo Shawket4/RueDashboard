@@ -297,7 +297,11 @@
       "new": "صنف جديد",
       "edit": "تعديل الصنف",
       "namePh": "مثال: لاتيه",
-      "descPh": "اختياري"
+      "descPh": "اختياري",
+      "image": "صورة الصنف",
+      "imageHint": "PNG أو JPG أو WebP · بحد أقصى 5 ميجابايت",
+      "imageRemoved": "تم حذف الصورة",
+      "imageAfterSave": "احفظ الصنف أولاً، ثم يمكنك إضافة صورة."
     },
     "categoryDialog": {
       "new": "فئة جديدة",

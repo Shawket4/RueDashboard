@@ -297,7 +297,11 @@
       "new": "New Item",
       "edit": "Edit Item",
       "namePh": "e.g. Latte",
-      "descPh": "Optional"
+      "descPh": "Optional",
+      "image": "Item image",
+      "imageHint": "PNG, JPG or WebP · up to 5 MB",
+      "imageRemoved": "Image removed",
+      "imageAfterSave": "Save the item first, then you can add an image."
     },
     "categoryDialog": {
       "new": "New Category",
