@@ -24,7 +24,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { recipeApi } from "@/entities/recipe/api";
 import { useAddonRecipes } from "@/entities/recipe/queries";
 import { useMenuItems, useMenuItem, useAddons, useSlots, useOptionals } from "@/entities/menu/queries";
-import { slotApi, optionalApi } from "@/entities/menu/api";
+import { slotApi, optionalApi, menuItemApi } from "@/entities/menu/api";
 import { useCatalog } from "@/entities/inventory/queries";
 import { drinkRecipeSchema, addonRecipeSchema, type DrinkRecipeValues, type AddonRecipeValues } from "@/entities/recipe/schemas";
 import { slotSchema, optionalSchema, type SlotValues, type OptionalValues } from "@/entities/menu/schemas";
@@ -32,14 +32,12 @@ import { QUERY_KEYS } from "@/shared/config/constants";
 import { useCurrentContext } from "@/shared/hooks/use-current-context";
 import { getErrorMessage } from "@/shared/api/errors";
 import { fmtUnit } from "@/shared/lib/format";
+import { exportToExcel } from "@/shared/lib/excel";
 import type { AddonIngredient, AddonItem, MenuItem, MenuItemEmbeddedRecipe } from "@/shared/types";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Drinks Tab
 // ─────────────────────────────────────────────────────────────────────────────
-// IMPORTANT: reads recipes from GET /menu-items/:id (`fullItem.recipes`)
-// instead of hitting /recipes/drinks/:id separately. The detail endpoint
-// already embeds them — one round-trip, no race conditions.
 function DrinksTab({ orgId }: { orgId: string }) {
   const { t } = useTranslation();
   const qc = useQueryClient();
@@ -53,12 +51,6 @@ function DrinksTab({ orgId }: { orgId: string }) {
 
   const recipes = fullItem?.recipes ?? [];
 
-  // Size resolution:
-  //   - If the item defines explicit sizes, use those labels.
-  //   - Otherwise fall back to "one_size" (what the backend actually emits for
-  //     size-less drinks; older code used "Regular" which matched nothing).
-  //   - Defensive: union in any size_label appearing in recipes but not
-  //     declared, so data never silently disappears.
   const sizes = useMemo<string[]>(() => {
     const declared = (fullItem?.sizes ?? []).map((s) => s.label);
     const inRecipes = Array.from(new Set(recipes.map((r) => r.size_label)));
@@ -702,10 +694,100 @@ export default function Recipes() {
   const { orgId } = useCurrentContext();
   const [tab, setTab] = useState<"drinks" | "addons" | "slots">("drinks");
 
+  const { data: items = [] } = useMenuItems(orgId);
+  const { data: addons = [] } = useAddons(orgId);
+
+const handleExport = async () => {
+    if (!items.length && !addons.length) return;
+
+    const toastId = toast.loading(t("excel.generating", { defaultValue: "Gathering recipe data..." }));
+
+    try {
+      // 1. Changed getById to get
+      const fullItems = await Promise.all(
+        items.map((item) => menuItemApi.get(item.id))
+      );
+
+      // 2. Types will now infer correctly since fullItems is MenuItemFull[]
+      const drinkRows = fullItems.flatMap((item) =>
+        (item.recipes || []).map((r) => ({
+          itemName: item.name,
+          size: r.size_label,
+          ingredient: r.ingredient_name,
+          quantity: Number(r.quantity_used),
+          unit: r.ingredient_unit,
+        }))
+      );
+
+      const allAddonRecipes = await Promise.all(
+        addons.map(async (addon) => {
+          const recipes = await recipeApi.listAddon(addon.id);
+          return { addon, recipes };
+        })
+      );
+
+      const addonRows = allAddonRecipes.flatMap(({ addon, recipes }) =>
+        (recipes || []).map((r) => ({
+          addonName: addon.name,
+          type: addon.addon_type,
+          ingredient: r.ingredient_name,
+          quantity: Number(r.quantity_used),
+          unit: r.unit,
+        }))
+      );
+
+      await exportToExcel({
+        filename: "Recipes_Export",
+        sheets: [
+          {
+            name: "Drinks Recipes",
+            title: t("recipes.tabs.drinks", { defaultValue: "Drinks Recipes" }),
+            columns: [
+              { key: "item", header: t("common.name", { defaultValue: "Item Name" }), accessor: (r) => r.itemName, width: 30 },
+              { key: "size", header: t("recipes.size", { defaultValue: "Size" }), accessor: (r) => r.size, width: 20 },
+              { key: "ingredient", header: t("recipes.ingredient", { defaultValue: "Ingredient" }), accessor: (r) => r.ingredient, width: 30 },
+              { key: "quantity", header: t("common.qty", { defaultValue: "Quantity" }), accessor: (r) => r.quantity, type: "number", width: 15 },
+              { key: "unit", header: t("common.unit", { defaultValue: "Unit" }), accessor: (r) => r.unit, width: 10 },
+            ],
+            rows: drinkRows,
+          },
+          {
+            name: "Addon Recipes",
+            title: t("recipes.tabs.addons", { defaultValue: "Addon Recipes" }),
+            columns: [
+              { key: "addon", header: t("common.name", { defaultValue: "Addon Name" }), accessor: (r) => r.addonName, width: 30 },
+              { key: "type", header: t("common.type", { defaultValue: "Type" }), accessor: (r) => r.type, width: 25 },
+              { key: "ingredient", header: t("recipes.ingredient", { defaultValue: "Ingredient" }), accessor: (r) => r.ingredient, width: 30 },
+              { key: "quantity", header: t("common.qty", { defaultValue: "Quantity" }), accessor: (r) => r.quantity, type: "number", width: 15 },
+              { key: "unit", header: t("common.unit", { defaultValue: "Unit" }), accessor: (r) => r.unit, width: 10 },
+            ],
+            rows: addonRows,
+          },
+        ],
+      });
+
+      toast.success(t("excel.done", { count: drinkRows.length + addonRows.length, defaultValue: "Export complete!" }), { id: toastId });
+    } catch (error) {
+      toast.error(getErrorMessage(error), { id: toastId });
+    }
+  };
   if (!orgId) return <PageShell title={t("recipes.title")} description={t("recipes.subtitle")}>{null}</PageShell>;
 
   return (
-    <PageShell title={t("recipes.title")} description={t("recipes.subtitle")}>
+    <PageShell 
+      title={t("recipes.title")} 
+      description={t("recipes.subtitle")}
+      action={
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={handleExport} 
+          disabled={!items.length && !addons.length}
+        >
+          {t("common.export", { defaultValue: "Export" })}
+        </Button>
+      }
+    >
       {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
       <Tabs value={tab} onValueChange={(v: any) => setTab(v)}>
         <TabsList>

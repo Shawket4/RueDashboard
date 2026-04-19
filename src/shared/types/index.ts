@@ -334,12 +334,22 @@ export interface Order {
   items?: OrderItem[];
 }
 
+export interface OrderSummary {
+  revenue: number;
+  completed: number;
+  voided: number;
+  discounts: number;
+  tips: number;
+}
+
+
 export interface PaginatedOrders {
   data: Order[];
   total: number;
   page: number;
   per_page: number;
   total_pages: number;
+  summary: OrderSummary;
 }
 
 export interface OrdersQuery {
