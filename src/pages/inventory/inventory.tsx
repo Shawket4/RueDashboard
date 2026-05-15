@@ -116,7 +116,7 @@ function CatalogTab({ orgId }: { orgId: string }) {
       accessorKey: "cost_per_unit",
       header: "Cost / unit",
       cell: ({ row }) => (
-        <span className="tabular text-sm">{row.original.cost_per_unit > 0 ? `${row.original.cost_per_unit} pt` : "—"}</span>
+        <span className="tabular text-sm">{row.original.cost_per_unit > 0 ? `${row.original.cost_per_unit} EGP` : "—"}</span>
       ),
     },
     {
@@ -149,7 +149,7 @@ function CatalogTab({ orgId }: { orgId: string }) {
             { key: "name", header: t("common.name"), accessor: (i: OrgIngredient) => i.name, width: 28 },
             { key: "unit", header: "Unit", accessor: (i: OrgIngredient) => fmtUnit(i.unit), width: 10 },
             { key: "category", header: t("common.category"), accessor: (i: OrgIngredient) => i.category, width: 16 },
-            { key: "cost", header: "Cost/unit (pt)", accessor: (i: OrgIngredient) => i.cost_per_unit, type: "number", width: 14 },
+            { key: "cost", header: "Cost/unit (EGP)", accessor: (i: OrgIngredient) => i.cost_per_unit, type: "number", width: 14 },
             { key: "is_active", header: t("common.status"), accessor: (i: OrgIngredient) => i.is_active, type: "bool", width: 12 },
           ],
           rows: items,

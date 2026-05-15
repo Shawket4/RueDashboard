@@ -1,5 +1,5 @@
 import { apiClient } from "@/shared/api/client";
-import type { AddonItem, AddonSlot, Category, ItemSize, MenuItem, MenuItemFull, MenuItemOptionalField } from "@/shared/types";
+import type { AddonItem, AddonSlot, Category, ItemSize, MenuItem, MenuItemFull, MenuItemOptionalField, PublicMenuResponse } from "@/shared/types";
 
 export const categoryApi = {
   list: (orgId: string) =>
@@ -102,4 +102,9 @@ export const optionalApi = {
       .then((r) => r.data),
   remove: (menuItemId: string, fieldId: string) =>
     apiClient.delete(`/menu-items/${menuItemId}/optionals/${fieldId}`).then(() => undefined),
+};
+
+export const publicMenuApi = {
+  get: (orgId: string) =>
+    apiClient.get<PublicMenuResponse>(`/menu/public/${orgId}`).then((r) => r.data),
 };

@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { QUERY_KEYS } from "@/shared/config/constants";
-import { addonApi, categoryApi, menuItemApi, optionalApi, slotApi } from "./api";
+import { addonApi, categoryApi, menuItemApi, optionalApi, publicMenuApi, slotApi } from "./api";
 
 export const useCategories = (orgId: string | null) =>
   useQuery({ queryKey: QUERY_KEYS.categories(orgId ?? ""), queryFn: () => categoryApi.list(orgId!), enabled: !!orgId });
@@ -30,4 +30,11 @@ export const useOptionals = (menuItemId: string | null) =>
     queryKey: QUERY_KEYS.optionals(menuItemId ?? ""),
     queryFn: () => optionalApi.list(menuItemId!),
     enabled: !!menuItemId,
+  });
+
+export const usePublicMenu = (orgId: string | null) =>
+  useQuery({
+    queryKey: QUERY_KEYS.publicMenu(orgId ?? ""),
+    queryFn: () => publicMenuApi.get(orgId!),
+    enabled: !!orgId,
   });

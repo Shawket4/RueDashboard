@@ -553,3 +553,53 @@ export interface Discount {
   created_at: string;
   updated_at: string;
 }
+
+// ── Public Menu ─────────────────────────────────────────────────────────────
+
+export interface PublicAddonItem {
+  id: string;
+  name: string;
+  default_price: number;
+}
+
+export interface PublicAddonSlot {
+  id: string;
+  addon_type: string;
+  label: string | null;
+  is_required: boolean;
+  min_selections: number;
+  max_selections: number | null;
+  addon_items: PublicAddonItem[];
+}
+
+export interface PublicItemSize {
+  id: string;
+  label: string;
+  price_override: number;
+}
+
+export interface PublicMenuItem {
+  id: string;
+  name: string;
+  description: string | null;
+  image_url: string | null;
+  base_price: number;
+  display_order: number;
+  sizes: PublicItemSize[];
+  addon_slots: PublicAddonSlot[];
+}
+
+export interface PublicCategory {
+  id: string;
+  name: string;
+  image_url: string | null;
+  display_order: number;
+  items: PublicMenuItem[];
+}
+
+export interface PublicMenuResponse {
+  org_id: string;
+  org_name: string;
+  logo_url: string | null;
+  categories: PublicCategory[];
+}

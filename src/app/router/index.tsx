@@ -18,6 +18,7 @@ const Analytics = lazy(() => import("@/pages/analytics/analytics"));
 const Discounts = lazy(() => import("@/pages/discounts/discounts"));
 const Permissions = lazy(() => import("@/pages/permissions/permissions"));
 const Settings = lazy(() => import("@/pages/settings/settings"));
+const PublicMenu = lazy(() => import("@/pages/public-menu/public-menu"));
 const NotFound = lazy(() => import("@/pages/error/not-found"));
 
 function PageLoader() {
@@ -37,6 +38,7 @@ const wrap = (el: React.ReactNode) => <Suspense fallback={<PageLoader />}>{el}</
 
 const router = createBrowserRouter([
   { path: "/login", element: wrap(<Login />) },
+  { path: "/menu/:orgId", element: wrap(<PublicMenu />) },
   {
     path: "/",
     element: <ProtectedRoute />,

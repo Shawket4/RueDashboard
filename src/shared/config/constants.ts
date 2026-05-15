@@ -62,6 +62,7 @@ export const QUERY_KEYS = {
   permissions: (userId: string) => ["permissions", userId] as const,
   rolePerms: ["role-permissions"] as const,
   categories: (orgId: string) => ["categories", orgId] as const,
+  publicMenu: (orgId: string) => ["public-menu", orgId] as const,
   menuItems: (orgId: string, catId?: string | null) => ["menu-items", orgId, catId ?? "all"] as const,
   menuItem: (id: string) => ["menu-item", id] as const,
   addons: (orgId: string, type?: string | null) => ["addons", orgId, type ?? "all"] as const,
