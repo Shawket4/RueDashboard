@@ -437,6 +437,7 @@ function ItemImage({
   fallbackName,
   fallbackVariant = "card",
   disableFade = false,
+  iconSize = 28,
 }: {
   src?: string | null;
   alt: string;
@@ -1260,48 +1261,50 @@ function BottomSheet({
   ariaLabel?: string;
   children: ReactNode;
 }) {
-  const [phase, setPhase] = useState<SheetPhase>("closed");
+  const [mounted, setMounted] = useState(open);
+  const [animate, setAnimate] = useState(false);
   const sheetRef = useRef<HTMLDivElement | null>(null);
   const dragRef = useRef<{ startY: number; offset: number } | null>(null);
 
-  // Phase machine — gives us one frame to mount before the slide-in begins
+  // Sync mounted and animate states to trigger entry/exit transitions cleanly
   useEffect(() => {
-    if (open && phase === "closed") {
-      setPhase("opening");
-      const r1 = requestAnimationFrame(() => {
-        const r2 = requestAnimationFrame(() => setPhase("open"));
-        return () => cancelAnimationFrame(r2);
-      });
-      return () => cancelAnimationFrame(r1);
-    }
-    if (!open && (phase === "open" || phase === "opening")) {
-      setPhase("closing");
-      const t = window.setTimeout(() => setPhase("closed"), 280);
+    if (open) {
+      setMounted(true);
+    } else {
+      setAnimate(false);
+      const t = window.setTimeout(() => setMounted(false), 300);
       return () => window.clearTimeout(t);
     }
-  }, [open, phase]);
+  }, [open]);
 
-  // Body scroll lock while mounted
   useEffect(() => {
-    if (phase === "closed") return;
+    if (mounted && open) {
+      const id = window.setTimeout(() => setAnimate(true), 16);
+      return () => window.clearTimeout(id);
+    }
+  }, [mounted, open]);
+
+  // Lock body scroll while mounted
+  useEffect(() => {
+    if (!mounted) return;
     const original = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = original;
     };
-  }, [phase]);
+  }, [mounted]);
 
-  // ESC to close
+  // ESC key to close
   useEffect(() => {
-    if (phase === "closed") return;
+    if (!mounted) return;
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [phase, onClose]);
+  }, [mounted, onClose]);
 
-  // Drag-to-dismiss (mobile)
+  // Drag-to-dismiss (mobile only)
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!sheetRef.current) return;
     dragRef.current = { startY: e.clientY, offset: 0 };
@@ -1313,7 +1316,6 @@ function BottomSheet({
     if (!dragRef.current || !sheetRef.current) return;
     const delta = Math.max(0, e.clientY - dragRef.current.startY);
     dragRef.current.offset = delta;
-    // Slight resistance: 0.6x the actual drag distance after 40px
     const eased = delta < 40 ? delta : 40 + (delta - 40) * 0.85;
     sheetRef.current.style.transform = `translate3d(0, ${eased}px, 0)`;
   };
@@ -1331,9 +1333,7 @@ function BottomSheet({
     }
   };
 
-  if (phase === "closed" || typeof document === "undefined") return null;
-
-  const isVisible = phase === "open";
+  if (!mounted || typeof document === "undefined") return null;
 
   return createPortal(
     <div className="fixed inset-0 z-50 light-theme">
@@ -1344,7 +1344,7 @@ function BottomSheet({
         className={cx(
           "absolute inset-0 bg-slate-900/50 backdrop-blur-sm",
           "transition-opacity duration-300 ease-out",
-          isVisible ? "opacity-100" : "opacity-0"
+          animate ? "opacity-100" : "opacity-0"
         )}
       />
 
@@ -1364,7 +1364,7 @@ function BottomSheet({
           // Animation — only transform-y animates; -translate-x-1/2 composes via Tailwind vars on sm
           "transform-gpu will-change-transform",
           "transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]",
-          isVisible
+          animate
             ? "translate-y-0"
             : "translate-y-full sm:translate-y-[calc(100%+1.5rem)]"
         )}
@@ -1397,12 +1397,20 @@ function ItemDetailDialog({
   onClose: () => void;
   onAdd: (line: CartLine, sourceEl: HTMLElement | null) => void;
 }) {
+  const [localItem, setLocalItem] = useState<PublicMenuItem | null>(null);
+
+  useEffect(() => {
+    if (item) {
+      setLocalItem(item);
+    }
+  }, [item]);
+
   return (
-    <BottomSheet open={!!item} onClose={onClose} ariaLabel={item?.name}>
-      {item && (
+    <BottomSheet open={!!item} onClose={onClose} ariaLabel={localItem?.name}>
+      {localItem && (
         <ItemDetailBody
-          key={String(item.id)}
-          item={item}
+          key={String(localItem.id)}
+          item={localItem}
           onClose={onClose}
           onAdd={onAdd}
         />
@@ -1516,7 +1524,7 @@ function ItemDetailBody({
           alt={item.name}
           fallbackName={item.name}
           fallbackVariant="hero"
-          className="w-full h-36 sm:h-56 bg-slate-100"
+          className="w-full h-48 sm:h-64 bg-slate-100"
           iconSize={48}
         />
         {item.image_url && (

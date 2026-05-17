@@ -1,5 +1,8 @@
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap');
+
+/* Fallback local Cairo font definitions in case Google Fonts is offline */
 @font-face {
-  font-family: 'Cairo';
+  font-family: 'Cairo Fallback';
   src: url('/fonts/Cairo-Regular.ttf') format('truetype');
   font-weight: 400;
   font-style: normal;
@@ -7,7 +10,7 @@
 }
 
 @font-face {
-  font-family: 'Cairo';
+  font-family: 'Cairo Fallback';
   src: url('/fonts/Cairo-SemiBold.ttf') format('truetype');
   font-weight: 600;
   font-style: normal;
@@ -15,7 +18,7 @@
 }
 
 @font-face {
-  font-family: 'Cairo';
+  font-family: 'Cairo Fallback';
   src: url('/fonts/Cairo-SemiBold.ttf') format('truetype');
   font-weight: 700;
   font-style: normal;
@@ -23,17 +26,14 @@
 }
 
 @font-face {
-  font-family: 'Cairo';
+  font-family: 'Cairo Fallback';
   src: url('/fonts/Cairo-SemiBold.ttf') format('truetype');
   font-weight: 900;
   font-style: normal;
   font-display: swap;
 }
 
-.public-menu-root {
-  font-family: 'Cairo', system-ui, -apple-system, sans-serif !important;
-}
-
+.public-menu-root, 
 .public-menu-root * {
-  font-family: 'Cairo', system-ui, -apple-system, sans-serif !important;
+  font-family: 'Cairo', 'Cairo Fallback', system-ui, -apple-system, sans-serif !important;
 }
