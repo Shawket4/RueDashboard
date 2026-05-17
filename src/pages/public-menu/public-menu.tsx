@@ -123,16 +123,7 @@ const lineSignature = (
   addonIds: ID[]
 ): string => `${itemId}|${sizeId ?? "-"}|${[...addonIds].sort().join(",")}`;
 
-/* Order code — short, human-readable, omits visually confusable chars */
-const generateOrderCode = (): string => {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  const pick = (n: number) =>
-    Array.from(
-      { length: n },
-      () => chars[Math.floor(Math.random() * chars.length)]
-    ).join("");
-  return `${pick(3)}-${pick(3)}`;
-};
+
 
 /* Subtle haptic feedback. No-op on iOS Safari and desktop. */
 const haptic = (intensity: "light" | "medium" | "heavy" = "light") => {
@@ -1792,21 +1783,6 @@ function ShowToTellerDialog({
   total: number;
 }) {
   const { t } = useTranslation();
-  const [orderCode, setOrderCode] = useState("");
-
-  const [timestamp, setTimestamp] = useState("");
-
-  // Fresh code each time the dialog opens
-  useEffect(() => {
-    if (!open) return;
-    setOrderCode(generateOrderCode());
-    const now = new Date();
-    setTimestamp(
-      now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-    );
-  }, [open]);
-
-  // Lazy-fetch Lottie JSON once (subsequent opens reuse it)
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
@@ -1818,9 +1794,9 @@ function ShowToTellerDialog({
 
         <div className="flex-1 overflow-y-auto overscroll-contain">
           {/* Hero — Lottie + welcome copy */}
-          <div className="bg-primary px-8 pt-8 pb-14 text-white text-center relative overflow-hidden">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.18),transparent_60%)] pointer-events-none" />
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,rgba(255,255,255,0.08),transparent_55%)] pointer-events-none" />
+          <div className="bg-slate-50 px-8 pt-8 pb-14 text-slate-900 text-center relative overflow-hidden">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(0,0,0,0.03),transparent_60%)] pointer-events-none" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,rgba(0,0,0,0.02),transparent_55%)] pointer-events-none" />
 
             <div className="relative h-32 w-32 mx-auto mb-3 animate-in zoom-in-90 duration-500">
   <Suspense fallback={<LottieFallback />}>
@@ -1831,26 +1807,15 @@ function ShowToTellerDialog({
             <h2 className="text-2xl font-black tracking-tight mb-2 animate-in fade-in slide-in-from-bottom-1 duration-500">
               {t("menu.teller.title")}
             </h2>
-            <p className="text-white/85 text-[13px] sm:text-sm leading-relaxed max-w-[18rem] mx-auto animate-in fade-in slide-in-from-bottom-2 duration-700">
+            <p className="text-slate-500 font-medium text-[13px] sm:text-sm leading-relaxed max-w-[18rem] mx-auto animate-in fade-in slide-in-from-bottom-2 duration-700">
               {t("menu.teller.subtitle")}
             </p>
           </div>
 
-          {/* Order code + total card (overlapping the hero) */}
+          {/* Total card (overlapping the hero) */}
           <div className="px-5 sm:px-6 -mt-8 relative z-10">
-            <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/60 border border-slate-100 p-5 flex items-center justify-between gap-4 animate-in fade-in slide-in-from-bottom-3 duration-500">
-              <div className="min-w-0">
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
-                  {t("menu.teller.orderCode")}
-                </p>
-                <p className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 tabular-nums mt-1 font-mono">
-                  {orderCode}
-                </p>
-                <p className="text-[10px] text-slate-400 mt-0.5 tabular-nums">
-                  {timestamp}
-                </p>
-              </div>
-              <div className="text-end">
+            <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/60 border border-slate-100 p-5 flex items-center justify-center animate-in fade-in slide-in-from-bottom-3 duration-500">
+              <div className="text-center">
                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
                   {t("menu.teller.total")}
                 </p>
