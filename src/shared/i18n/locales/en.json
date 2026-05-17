@@ -328,7 +328,63 @@
     "emptyAddons": "No addons found",
     "searchItems": "Search items…",
     "searchCategories": "Search categories…",
-    "searchAddons": "Search addons…"
+    "searchAddons": "Search addons…",
+    "header": {
+      "subtitle": "Browse, build your order, take your time."
+    },
+    "search": {
+      "placeholder": "Search the menu…",
+      "noResults": "Nothing matches \"{{query}}\".",
+      "noResultsHint": "Try a different word or browse the categories."
+    },
+    "card": {
+      "startsAt": "Starts at",
+      "price": "Price"
+    },
+    "detail": {
+      "size": "Size",
+      "quantity": "Quantity",
+      "decrease": "Decrease quantity",
+      "increase": "Increase quantity",
+      "close": "Close",
+      "addToOrder_one": "Add {{count}} to order",
+      "addToOrder_other": "Add {{count}} to order",
+      "requiredChooseOne": "Required • pick 1",
+      "requiredChooseRange": "Required • pick {{min}}–{{max}}",
+      "requiredChooseExact": "Required • pick {{count}}",
+      "chooseUpTo": "Pick up to {{max}}",
+      "optional": "Optional"
+    },
+    "cart": {
+      "title": "Your order",
+      "lines_one": "{{count}} item",
+      "lines_other": "{{count}} items",
+      "empty": "Nothing here yet — pick something good.",
+      "remove": "Remove",
+      "total": "Total",
+      "showToBarista": "Show to barista"
+    },
+    "bar": {
+      "yourOrder": "Your order",
+      "items_one": "{{count}} item",
+      "items_other": "{{count}} items",
+      "view": "View",
+      "viewOrder": "View order"
+    },
+    "teller": {
+      "title": "You're all set ☕",
+      "subtitle": "Show this to our skilled barista and they'll take it from here.",
+      "orderCode": "Order code",
+      "total": "Total",
+      "done": "Done",
+      "noteTitle": "One more thing",
+      "noteBody": "Keep this screen open until your order is taken."
+    },
+    "errors": {
+      "title": "Menu not available",
+      "body": "We couldn't find this menu. The link might have expired or moved.",
+      "refresh": "Try again"
+    }
   },
   "recipes": {
     "title": "Recipes",

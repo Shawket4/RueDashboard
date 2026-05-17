@@ -7,6 +7,9 @@ import "@/shared/auth/store";
 import "@/shared/auth/app-store";
 import { AppProviders } from "./providers";
 import { AppRouter } from "./router";
+import { initConsoleSilencer } from "./console-silencer";
+
+initConsoleSilencer();
 
 createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

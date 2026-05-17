@@ -328,7 +328,63 @@
     "emptyAddons": "لا توجد إضافات",
     "searchItems": "بحث عن الأصناف…",
     "searchCategories": "بحث عن الفئات…",
-    "searchAddons": "بحث عن الإضافات…"
+    "searchAddons": "بحث عن الإضافات…",
+    "header": {
+      "subtitle": "اتفرّج، جهّز طلبك، وخد راحتك."
+    },
+    "search": {
+      "placeholder": "دوّر في المنيو…",
+      "noResults": "مفيش حاجة طالعه لـ \"{{query}}\".",
+      "noResultsHint": "جرّب كلمة تانية أو اتفرج على الأقسام."
+    },
+    "card": {
+      "startsAt": "يبدأ من",
+      "price": "السعر"
+    },
+    "detail": {
+      "size": "الحجم",
+      "quantity": "الكمية",
+      "decrease": "نقص الكمية",
+      "increase": "زود الكمية",
+      "close": "اقفل",
+      "addToOrder_one": "ضيف {{count}} للطلب",
+      "addToOrder_other": "ضيف {{count}} للطلب",
+      "requiredChooseOne": "ضروري • اختار واحد",
+      "requiredChooseRange": "ضروري • اختار {{min}}–{{max}}",
+      "requiredChooseExact": "ضروري • اختار {{count}}",
+      "chooseUpTo": "اختار حد أقصى {{max}}",
+      "optional": "اختياري"
+    },
+    "cart": {
+      "title": "طلبك",
+      "lines_one": "صنف واحد",
+      "lines_other": "{{count}} أصناف",
+      "empty": "لسه فاضي — روح اختار حاجة تحلّي يومك.",
+      "remove": "احذف",
+      "total": "الإجمالي",
+      "showToBarista": "وريها للباريستا"
+    },
+    "bar": {
+      "yourOrder": "طلبك",
+      "items_one": "صنف واحد",
+      "items_other": "{{count}} أصناف",
+      "view": "اعرض",
+      "viewOrder": "اعرض الطلب"
+    },
+    "teller": {
+      "title": "كله تمام ☕",
+      "subtitle": "وريها للباريستا بتاعنا وهو هيكمّل الباقي.",
+      "orderCode": "كود الطلب",
+      "total": "الإجمالي",
+      "done": "تمام",
+      "noteTitle": "حاجة أخيرة",
+      "noteBody": "سيب الشاشة دي مفتوحة لحد ما الطلب يتاخد."
+    },
+    "errors": {
+      "title": "المنيو مش متاح",
+      "body": "مش لاقيين المنيو ده. ممكن اللينك يكون انتهى أو اتغيّر.",
+      "refresh": "حاول تاني"
+    }
   },
   "recipes": {
     "title": "الوصفات",
