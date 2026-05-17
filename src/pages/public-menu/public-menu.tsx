@@ -1972,7 +1972,7 @@ function ShowToTellerDialog({
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(0,0,0,0.03),transparent_60%)] pointer-events-none" />
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,rgba(0,0,0,0.02),transparent_55%)] pointer-events-none" />
 
-            <div className="relative h-32 w-32 mx-auto mb-3 animate-in zoom-in-90 duration-500">
+            <div className="relative h-36 w-36 sm:h-40 sm:w-40 mx-auto mb-3 animate-in zoom-in-90 duration-500">
   <Suspense fallback={<LottieFallback />}>
     <DotLottieRender />
   </Suspense>
@@ -2104,6 +2104,7 @@ function DotLottieRender() {
           style={{
             width: "100%",
             height: "100%",
+            objectFit: "contain",
             display: loaded ? "block" : "none",
           }}
           dotLottieRefCallback={(instance) => {
