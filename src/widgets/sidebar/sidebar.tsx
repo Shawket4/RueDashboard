@@ -95,7 +95,6 @@ const NAV: NavGroup[] = [
 // Org-logo override is commented out below — uncomment to re-enable.
 // ─────────────────────────────────────────────────────────────────────────────
 function BrandLogo({ collapsed }: { collapsed: boolean }) {
-  const { t } = useTranslation();
   // const { orgId, orgLogo } = useCurrentContext();
   // const { data: org } = useOrg(orgId);
   // const setSelectedOrg = useAppStore((s) => s.setSelectedOrg);
@@ -108,13 +107,6 @@ function BrandLogo({ collapsed }: { collapsed: boolean }) {
   // }, [org?.id, org?.logo_url, orgId, orgLogo, setSelectedOrg]);
 
   // const [orgLogoFailed, setOrgLogoFailed] = useState(false);
-  const [appLogoFailed, setAppLogoFailed] = useState(false);
-
-  const tile = (
-    <div className="w-8 h-8 brand-gradient rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm">
-      <Coffee size={15} className="text-white" />
-    </div>
-  );
 
   // ── Org logo override (disabled — uncomment to restore) ───────────────────
   // const hasOrgLogo = Boolean(orgLogo || org?.logo_url) && !orgLogoFailed;
@@ -145,26 +137,34 @@ function BrandLogo({ collapsed }: { collapsed: boolean }) {
   // }
 
   if (collapsed) {
-    return tile;
-  }
-
-  if (appLogoFailed) {
     return (
-      <div className="flex items-center gap-2.5 min-w-0">
-        {tile}
-        <span className="font-bold tracking-tight truncate">{t("app.name")}</span>
-      </div>
+      <svg viewBox="0 0 81.41 81.41" className="w-8 h-8 select-none flex-shrink-0">
+        <g>
+          <rect className="fill-current" x="38.08" y="24.95" width="5.25" height="31.51" rx=".66" ry=".66" transform="translate(-16.86 40.71) rotate(-45)"/>
+          <g>
+            <rect className="fill-current" x="24.95" y="38.08" width="31.51" height="5.25" rx=".66" ry=".66" transform="translate(-16.86 40.71) rotate(-45)"/>
+            <circle className="fill-[#c25b3f]" cx="40.71" cy="40.71" r="2.63"/>
+          </g>
+        </g>
+      </svg>
     );
   }
 
   return (
-    <img
-      src="/sufrix.svg"
-      alt={t("app.name")}
-      onError={() => setAppLogoFailed(true)}
-      className="h-8 px-2 object-contain select-none"
-      draggable={false}
-    />
+    <svg viewBox="0 0 119.35 43.42" className="h-8 px-2 select-none flex-shrink-0" style={{ width: "auto" }}>
+      <g id="Layer_1-2" data-name="Layer 1">
+        <g>
+          <g>
+            <rect className="fill-current" x="10.1" y=".95" width="5.25" height="31.51" rx=".66" ry=".66" transform="translate(-8.09 13.89) rotate(-45)"/>
+            <g>
+              <rect className="fill-current" x="-3.03" y="14.08" width="31.51" height="5.25" rx=".66" ry=".66" transform="translate(-8.09 13.89) rotate(-45)"/>
+              <circle className="fill-[#c25b3f]" cx="12.73" cy="16.71" r="2.63"/>
+            </g>
+          </g>
+          <text className="font-semibold text-[34px] tracking-tight fill-current" transform="translate(39.93 28.9)" style={{ fontFamily: "Cairo, system-ui, sans-serif" }}>Sufrix</text>
+        </g>
+      </g>
+    </svg>
   );
 }
 
