@@ -60,6 +60,8 @@ function UserDialog({ open, onClose, edit }: { open: boolean; onClose: () => voi
           phone: edit!.phone ?? "",
           role: edit!.role,
           is_active: edit!.is_active,
+          pin: "",
+          password: "",
         }
       : {
           name: "",
@@ -76,12 +78,15 @@ function UserDialog({ open, onClose, edit }: { open: boolean; onClose: () => voi
   const { mutate, isPending } = useMutation({
     mutationFn: (v: CreateUserValues | UpdateUserValues) => {
       if (isEdit) {
+        const updateValues = v as UpdateUserValues;
         const payload = {
           name: v.name,
           email: v.email || null,
           phone: v.phone || null,
           role: v.role,
           is_active: v.is_active,
+          ...(updateValues.pin ? { pin: updateValues.pin } : {}),
+          ...(updateValues.password ? { password: updateValues.password } : {}),
         };
         return userApi.update(edit!.id, payload);
       }
@@ -159,43 +164,41 @@ function UserDialog({ open, onClose, edit }: { open: boolean; onClose: () => voi
                 />
               </div>
 
-              {!isEdit && (
-                <div className="grid grid-cols-2 gap-3">
-                  <FormField
-                    control={form.control}
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    name={"pin" as any}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{t("users.pin")}</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="password"
-                            inputMode="numeric"
-                            maxLength={6}
-                            {...field}
-                            onChange={(e) => field.onChange(e.target.value.replace(/\D/g, ""))}
-                            placeholder="••••"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    name={"password" as any}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{t("auth.password")}</FormLabel>
-                        <FormControl><Input type="password" {...field} placeholder={t("common.optional")} /></FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              )}
+              <div className="grid grid-cols-2 gap-3">
+                <FormField
+                  control={form.control}
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  name={"pin" as any}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("users.pin")}</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="password"
+                          inputMode="numeric"
+                          maxLength={6}
+                          {...field}
+                          onChange={(e) => field.onChange(e.target.value.replace(/\D/g, ""))}
+                          placeholder={isEdit ? "•••• (leave blank to keep)" : "••••"}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  name={"password" as any}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("auth.password")}</FormLabel>
+                      <FormControl><Input type="password" {...field} placeholder={isEdit ? "Leave blank to keep" : t("common.optional")} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <FormField

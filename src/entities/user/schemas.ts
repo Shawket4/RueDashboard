@@ -15,7 +15,10 @@ export const createUserSchema = userBaseSchema.extend({
   password: z.string().min(6).optional().or(z.literal("")),
 });
 
-export const updateUserSchema = userBaseSchema;
+export const updateUserSchema = userBaseSchema.extend({
+  pin: z.string().regex(/^\d{4,6}$/, "4–6 digit PIN").optional().or(z.literal("")),
+  password: z.string().min(6).optional().or(z.literal("")),
+});
 
 export type CreateUserValues = z.infer<typeof createUserSchema>;
 export type UpdateUserValues = z.infer<typeof updateUserSchema>;
