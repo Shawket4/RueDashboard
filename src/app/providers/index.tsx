@@ -6,7 +6,7 @@ import { queryClient } from "@/shared/api/query";
 
 export function AppProviders({ children }: { children: React.ReactNode }) {
   return (
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem storageKey="rue.theme">
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem storageKey="sufrix.theme">
       <QueryClientProvider client={queryClient}>
         <TooltipProvider delayDuration={200}>
           {children}

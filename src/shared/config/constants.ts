@@ -4,10 +4,10 @@ export const DEFAULT_LOCALE_EN = "en-GB";
 export const DEFAULT_LOCALE_AR = "ar-EG";
 
 export const LS_KEYS = {
-  token: "rue.token",
-  auth: "rue.auth",
-  app: "rue.app",
-  theme: "rue.theme",
+  token: "sufrix.token",
+  auth: "sufrix.auth",
+  app: "sufrix.app",
+  theme: "sufrix.theme",
 } as const;
 
 export const ROLES = ["super_admin", "org_admin", "branch_manager", "teller"] as const;

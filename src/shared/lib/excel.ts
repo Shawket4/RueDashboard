@@ -204,28 +204,64 @@ export async function exportToExcel(config: ExcelExportConfig): Promise<void> {
       (ExcelJSMod as unknown as { default?: typeof import("exceljs") }).default ??
       (ExcelJSMod as unknown as typeof import("exceljs"));
     const wb = new ExcelJS.Workbook();
-    wb.creator = "Rue POS";
+    wb.creator = "Sufrix";
     wb.created = new Date();
 
     // Preload logo once if any sheet will use it
     let logoId: number | undefined;
     let logoDimensions = { width: 135, height: 57 };
-    const logoUrl = config.logoUrl ?? "/TheRue.png";
+    const logoUrl = config.logoUrl ?? "/sufrix.svg";
     try {
       const res = await fetch(logoUrl);
       if (res.ok) {
-        const buf = await res.arrayBuffer();
-        const contentType = res.headers.get("content-type");
-        let ext: "png" | "jpeg" = "png";
-        if (contentType && contentType.includes("jpeg")) {
-          ext = "jpeg";
-        } else if (logoUrl.toLowerCase().endsWith(".jpg") || logoUrl.toLowerCase().endsWith(".jpeg")) {
-          ext = "jpeg";
+        const isSvg =
+          logoUrl.toLowerCase().endsWith(".svg") ||
+          (res.headers.get("content-type") ?? "").includes("svg");
+
+        let pngBuf: ArrayBuffer;
+        let naturalW = 135;
+        let naturalH = 57;
+
+        if (isSvg) {
+          // Rasterize SVG → PNG via off-screen canvas so ExcelJS can embed it
+          const svgText = await res.text();
+          const blob = new Blob([svgText], { type: "image/svg+xml" });
+          const objectUrl = URL.createObjectURL(blob);
+          const pngDataUrl = await new Promise<string>((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => {
+              naturalW = img.naturalWidth || 400;
+              naturalH = img.naturalHeight || 120;
+              const scale = Math.min(1, 400 / naturalW);
+              const w = Math.round(naturalW * scale);
+              const h = Math.round(naturalH * scale);
+              const canvas = document.createElement("canvas");
+              canvas.width = w;
+              canvas.height = h;
+              const ctx = canvas.getContext("2d");
+              if (!ctx) { reject(new Error("no canvas ctx")); return; }
+              ctx.drawImage(img, 0, 0, w, h);
+              resolve(canvas.toDataURL("image/png"));
+            };
+            img.onerror = reject;
+            img.src = objectUrl;
+          });
+          URL.revokeObjectURL(objectUrl);
+          // Convert data URL to ArrayBuffer
+          const base64 = pngDataUrl.split(",")[1];
+          const binary = atob(base64);
+          const bytes = new Uint8Array(binary.length);
+          for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+          pngBuf = bytes.buffer;
+        } else {
+          pngBuf = await res.arrayBuffer();
+          const dims = await getImageDimensions(logoUrl);
+          naturalW = dims.width;
+          naturalH = dims.height;
         }
-        logoId = wb.addImage({ buffer: buf, extension: ext });
-        
-        const dims = await getImageDimensions(logoUrl);
-        logoDimensions = fitImageDimensions(dims.width, dims.height);
+
+        logoId = wb.addImage({ buffer: pngBuf, extension: "png" });
+        logoDimensions = fitImageDimensions(naturalW, naturalH);
       }
     } catch {
       /* logo optional */

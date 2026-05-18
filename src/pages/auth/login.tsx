@@ -70,7 +70,7 @@ export default function Login() {
               ))}
             </div>
           </div>
-          <p className="text-white/60 text-xs">© 2026 The Rue Coffee</p>
+          <p className="text-white/60 text-xs">© 2026 Sufrix</p>
         </div>
       </div>
 
@@ -103,7 +103,7 @@ export default function Login() {
                   <FormItem>
                     <FormLabel>{t("auth.email")}</FormLabel>
                     <FormControl>
-                      <Input type="email" autoComplete="email" placeholder="you@theruecoffee.com" {...field} />
+                      <Input type="email" autoComplete="email" placeholder="you@sufrix.com" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -137,7 +137,7 @@ export default function Login() {
               </Button>
             </form>
           </Form>
-          <p className="text-center text-xs text-muted-foreground mt-8">© 2026 Rue POS</p>
+          <p className="text-center text-xs text-muted-foreground mt-8">© 2026 Sufrix</p>
         </div>
       </div>
     </div>

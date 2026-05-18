@@ -17,7 +17,7 @@ type ChartTooltipProps = TooltipProps<number, string> & {
 };
 
 /**
- * Recharts custom tooltip matching the original Rue POS design:
+ * Recharts custom tooltip matching the Sufrix design:
  *   - Rounded popover card with soft border
  *   - Small coloured dot per series
  *   - Bold tabular-nums values on the right

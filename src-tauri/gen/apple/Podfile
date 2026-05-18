@@ -1,13 +1,13 @@
 # Uncomment the next line to define a global platform for your project
 
-target 'rue-dashboard_iOS' do
+target 'sufrix-dashboard_iOS' do
 platform :ios, '14.0'
-  # Pods for rue-dashboard_iOS
+  # Pods for sufrix-dashboard_iOS
 end
 
-target 'rue-dashboard_macOS' do
+target 'sufrix-dashboard_macOS' do
 platform :osx, '11.0'
-  # Pods for rue-dashboard_macOS
+  # Pods for sufrix-dashboard_macOS
 end
 
 # Delete the deployment target for iOS and macOS, causing it to be inherited from the Podfile

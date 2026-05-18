@@ -1,6 +1,6 @@
-# Rue POS Dashboard
+# Sufrix Dashboard
 
-Internal management dashboard for The Rue Coffee. React + TypeScript + Vite, built around a Rust backend.
+Internal management dashboard for Sufrix. React + TypeScript + Vite, built around a Rust backend.
 
 ## Stack (locked versions in `package.json`)
 
@@ -16,7 +16,7 @@ npm run dev
 
 `.env`:
 ```
-VITE_API_URL=http://localhost:8080/api
+VITE_API_URL=https://sufrix.duckdns.org/api
 ```
 
 ## Scripts
@@ -76,4 +76,4 @@ npx vite build      # → clean, 45s, 35 chunks
 
 ---
 
-© 2026 The Rue Coffee
+© 2026 Sufrix

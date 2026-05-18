@@ -72,7 +72,7 @@ export default function Settings() {
             </div>
             <div className="flex-1">
               <p className="text-sm font-bold">{t("app.name")}</p>
-              <p className="text-xs text-muted-foreground">© 2026 The Rue Coffee</p>
+              <p className="text-xs text-muted-foreground">© 2026 Sufrix</p>
             </div>
             <Badge variant="outline">v1.0.0</Badge>
           </CardContent>

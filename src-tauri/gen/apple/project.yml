@@ -1,6 +1,6 @@
-name: rue-dashboard
+name: sufrix-dashboard
 options:
-  bundleIdPrefix: com.rue.dashboard
+  bundleIdPrefix: com.sufrix.dashboard
   deploymentTarget:
     iOS: 14.0
 fileGroups: [../../src]
@@ -10,8 +10,8 @@ configs:
 settingGroups:
   app:
     base:
-      PRODUCT_NAME: Rue POS Dashboard
-      PRODUCT_BUNDLE_IDENTIFIER: com.rue.dashboard
+      PRODUCT_NAME: Sufrix Dashboard
+      PRODUCT_BUNDLE_IDENTIFIER: com.sufrix.dashboard
 targetTemplates:
   app:
     type: application
@@ -24,19 +24,20 @@ targetTemplates:
     settings:
       groups: [app]
 targets:
-  rue-dashboard_iOS:
+  sufrix-dashboard_iOS:
     type: application
     platform: iOS
     sources:
       - path: Sources
       - path: Assets.xcassets
-      - path: rue-dashboard_iOS
+      - path: Externals
+      - path: sufrix-dashboard_iOS
       - path: assets
         buildPhase: resources
         type: folder
       - path: LaunchScreen.storyboard
     info:
-      path: rue-dashboard_iOS/Info.plist
+      path: sufrix-dashboard_iOS/Info.plist
       properties:
         LSRequiresIPhoneOS: true
         UILaunchStoryboardName: LaunchScreen
@@ -53,7 +54,7 @@ targets:
         CFBundleShortVersionString: 1.0.0
         CFBundleVersion: "1.0.0"
     entitlements:
-      path: rue-dashboard_iOS/rue-dashboard_iOS.entitlements
+      path: sufrix-dashboard_iOS/sufrix-dashboard_iOS.entitlements
     scheme:
       environmentVariables:
         RUST_BACKTRACE: full
@@ -79,15 +80,9 @@ targets:
       - sdk: UIKit.framework
       - sdk: WebKit.framework
     preBuildScripts:
-      - script: |
-          if [ -f "$HOME/.zprofile" ]; then source "$HOME/.zprofile"; fi
-          if [ -f "$HOME/.zshrc" ]; then source "$HOME/.zshrc"; fi
-          export PATH="/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$HOME/.cargo/bin:$PATH"
-          cd "$PROJECT_DIR/../.."
-          npm run -- tauri ios xcode-script -v --platform ${PLATFORM_DISPLAY_NAME:?} --sdk-root ${SDKROOT:?} --framework-search-paths "${FRAMEWORK_SEARCH_PATHS:?}" --header-search-paths "${HEADER_SEARCH_PATHS:?}" --gcc-preprocessor-definitions "${GCC_PREPROCESSOR_DEFINITIONS:-}" --configuration ${CONFIGURATION:?} ${FORCE_COLOR} ${ARCHS:?}
+      - script: npm run -- tauri ios xcode-script -v --platform ${PLATFORM_DISPLAY_NAME:?} --sdk-root ${SDKROOT:?} --framework-search-paths "${FRAMEWORK_SEARCH_PATHS:?}" --header-search-paths "${HEADER_SEARCH_PATHS:?}" --gcc-preprocessor-definitions "${GCC_PREPROCESSOR_DEFINITIONS:-}" --configuration ${CONFIGURATION:?} ${FORCE_COLOR} ${ARCHS:?}
         name: Build Rust Code
         basedOnDependencyAnalysis: false
-        shell: /bin/zsh
         outputFiles:
           - $(SRCROOT)/Externals/x86_64/${CONFIGURATION}/libapp.a
           - $(SRCROOT)/Externals/arm64/${CONFIGURATION}/libapp.a

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { /* useEffect, */ useMemo, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -35,7 +35,7 @@ import { ThemeToggle } from "@/widgets/theme-toggle/theme-toggle";
 import { LanguageToggle } from "@/widgets/language-toggle/language-toggle";
 import type { Role } from "@/shared/config/constants";
 import type { LucideIcon } from "lucide-react";
-import { useOrg } from "@/entities/org/queries";
+// import { useOrg } from "@/entities/org/queries"; // re-enable with org logo override
 import { usePermissions } from "@/shared/hooks/use-permissions";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -91,24 +91,23 @@ const NAV: NavGroup[] = [
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Brand logo — tries /TheRue.png when expanded, gracefully falls back to the
-// gradient tile + wordmark if the PNG is missing. Collapsed state is always
-// the compact gradient tile to preserve the 72px rail.
+// Brand logo — shows /sufrix.svg. Falls back to gradient tile + wordmark.
+// Org-logo override is commented out below — uncomment to re-enable.
 // ─────────────────────────────────────────────────────────────────────────────
 function BrandLogo({ collapsed }: { collapsed: boolean }) {
   const { t } = useTranslation();
-  const { orgId, orgLogo } = useCurrentContext();
-  const { data: org } = useOrg(orgId);   // null-safe: enabled only when orgId != null
-  const setSelectedOrg = useAppStore((s) => s.setSelectedOrg);
+  // const { orgId, orgLogo } = useCurrentContext();
+  // const { data: org } = useOrg(orgId);
+  // const setSelectedOrg = useAppStore((s) => s.setSelectedOrg);
 
-  // Sync background query result with persistent store
-  useEffect(() => {
-    if (org?.id === orgId && org.logo_url !== orgLogo) {
-      setSelectedOrg(orgId, org.logo_url);
-    }
-  }, [org?.id, org?.logo_url, orgId, orgLogo, setSelectedOrg]);
+  // ── Org logo sync (disabled) ──────────────────────────────────────────────
+  // useEffect(() => {
+  //   if (org?.id === orgId && org.logo_url !== orgLogo) {
+  //     setSelectedOrg(orgId, org.logo_url);
+  //   }
+  // }, [org?.id, org?.logo_url, orgId, orgLogo, setSelectedOrg]);
 
-  const [orgLogoFailed, setOrgLogoFailed] = useState(false);
+  // const [orgLogoFailed, setOrgLogoFailed] = useState(false);
   const [appLogoFailed, setAppLogoFailed] = useState(false);
 
   const tile = (
@@ -117,31 +116,36 @@ function BrandLogo({ collapsed }: { collapsed: boolean }) {
     </div>
   );
 
-  const hasOrgLogo = Boolean(orgLogo || org?.logo_url) && !orgLogoFailed;
-  const currentLogoUrl = orgLogo || org?.logo_url;
+  // ── Org logo override (disabled — uncomment to restore) ───────────────────
+  // const hasOrgLogo = Boolean(orgLogo || org?.logo_url) && !orgLogoFailed;
+  // const currentLogoUrl = orgLogo || org?.logo_url;
+  //
+  // if (collapsed) {
+  //   return hasOrgLogo ? (
+  //     <img
+  //       src={currentLogoUrl!}
+  //       alt={org?.name ?? ""}
+  //       onError={() => setOrgLogoFailed(true)}
+  //       className="w-8 h-8 rounded-lg object-cover flex-shrink-0"
+  //       draggable={false}
+  //     />
+  //   ) : tile;
+  // }
+  //
+  // if (hasOrgLogo) {
+  //   return (
+  //     <img
+  //       src={currentLogoUrl!}
+  //       alt={org?.name ?? ""}
+  //       onError={() => setOrgLogoFailed(true)}
+  //       className="h-10 px-2 object-contain select-none"
+  //       draggable={false}
+  //     />
+  //   );
+  // }
 
   if (collapsed) {
-    return hasOrgLogo ? (
-      <img
-        src={currentLogoUrl!}
-        alt={org?.name ?? ""}
-        onError={() => setOrgLogoFailed(true)}
-        className="w-8 h-8 rounded-lg object-cover flex-shrink-0"
-        draggable={false}
-      />
-    ) : tile;
-  }
-
-  if (hasOrgLogo) {
-    return (
-      <img
-        src={currentLogoUrl!}
-        alt={org?.name ?? ""}
-        onError={() => setOrgLogoFailed(true)}
-        className="h-10 px-2 object-contain select-none"
-        draggable={false}
-      />
-    );
+    return tile;
   }
 
   if (appLogoFailed) {
@@ -155,7 +159,7 @@ function BrandLogo({ collapsed }: { collapsed: boolean }) {
 
   return (
     <img
-      src="/TheRue.png"
+      src="/sufrix.svg"
       alt={t("app.name")}
       onError={() => setAppLogoFailed(true)}
       className="h-8 px-2 object-contain select-none"

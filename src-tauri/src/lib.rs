@@ -1,4 +1,4 @@
-//! Rue POS — Tauri desktop shell.
+//! Sufrix — Tauri desktop shell.
 //!
 //! Phase 1: thin native wrapper around the existing Vite+React SPA.
 //! The frontend still talks directly to the remote API via axios.
@@ -20,5 +20,5 @@ pub fn run() {
         .plugin(tauri_plugin_http::init())
         .invoke_handler(tauri::generate_handler![ping, get_app_version])
         .run(tauri::generate_context!())
-        .expect("error while running rue-dashboard");
+        .expect("error while running sufrix-dashboard");
 }

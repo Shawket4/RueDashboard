@@ -20,7 +20,7 @@ jobs:
       - name: Build
         run: npm run build
         env:
-          VITE_API_URL: https://rue-pos.ddns.net/api
+          VITE_API_URL: https://sufrix.duckdns.org/api
 
       - name: Deploy to VPS
         uses: appleboy/scp-action@v0.1.7
@@ -29,7 +29,7 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           source: "dist/*"
-          target: "/var/www/rue-dashboard"
+          target: "/var/www/sufrix-dashboard"
           strip_components: 1
 
       - name: Reload Nginx

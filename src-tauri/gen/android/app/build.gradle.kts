@@ -13,34 +13,16 @@ val tauriProperties = Properties().apply {
     }
 }
 
-val keyProperties = Properties().apply {
-    val propFile = rootProject.file("key.properties")
-    if (propFile.exists()) {
-        propFile.inputStream().use { load(it) }
-    }
-}
-
 android {
     compileSdk = 36
-    namespace = "com.rue.dashboard"
+    namespace = "com.sufrix.dashboard"
     defaultConfig {
         manifestPlaceholders["usesCleartextTraffic"] = "false"
-        applicationId = "com.rue.dashboard"
+        applicationId = "com.sufrix.dashboard"
         minSdk = 24
         targetSdk = 36
         versionCode = tauriProperties.getProperty("tauri.android.versionCode", "1").toInt()
         versionName = tauriProperties.getProperty("tauri.android.versionName", "1.0")
-    }
-    signingConfigs {
-        create("release") {
-            val ks = keyProperties.getProperty("storeFile")
-            if (ks != null) {
-                storeFile = file(ks)
-                storePassword = keyProperties.getProperty("storePassword")
-                keyAlias = keyProperties.getProperty("keyAlias")
-                keyPassword = keyProperties.getProperty("keyPassword")
-            }
-        }
     }
     buildTypes {
         getByName("debug") {
@@ -56,7 +38,6 @@ android {
         }
         getByName("release") {
             isMinifyEnabled = true
-            signingConfig = signingConfigs.getByName("release")
             proguardFiles(
                 *fileTree(".") { include("**/*.pro") }
                     .plus(getDefaultProguardFile("proguard-android-optimize.txt"))
