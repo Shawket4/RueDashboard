@@ -309,12 +309,12 @@ function buildSheet<T>(
   });
 
   // Column definitions
-  const columnsSpec = sheet.columns.map((c) => ({ key: c.key, width: c.width ?? 18 }));
+  const columnsSpec = sheet.columns.map((c) => ({ key: c.key, width: c.width ?? 22 }));
   // If sheet is narrow, pad columns so the banner has enough room and doesn't get cut off
   const minColumns = 6;
   if (columnsSpec.length < minColumns) {
     for (let i = columnsSpec.length; i < minColumns; i++) {
-      columnsSpec.push({ key: `_pad_col_${i}`, width: 18 });
+      columnsSpec.push({ key: `_pad_col_${i}`, width: 22 });
     }
   }
   ws.columns = columnsSpec;
