@@ -89,7 +89,7 @@ function OverviewTab({ branchId, from, to }: { branchId: string; from: string | 
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
         <StatCard label={t("orders.totalRevenue")} value={fmtMoney(sales.total_revenue)} icon={Receipt} accent="success" />
         <StatCard label={t("orders.completed")} value={sales.total_orders} icon={ShoppingBag} accent="info" />
         <StatCard label={t("analytics.avgOrder")} value={fmtMoney(aov)} icon={TrendingUp} accent="violet" />
@@ -192,7 +192,7 @@ function RevenueTab({
   return (
     <div className="space-y-4">
       {sales && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
           <StatCard label={t("orders.totalRevenue")} value={fmtMoney(sales.total_revenue)} accent="success" />
           <StatCard label={t("orders.totalDiscounts")} value={fmtMoney(sales.total_discount)} accent="warning" />
           <StatCard label={t("orders.tax")} value={fmtMoney(sales.total_tax)} accent="info" />

@@ -435,7 +435,7 @@ export default function Users() {
       description={t("users.subtitle")}
       action={can("users", "create") ? <Button onClick={() => { setEditUser(null); setUserDlg(true); }}><Plus /> {t("common.new")}</Button> : undefined}
     >
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
         <StatCard label={t("users.totalUsers")} value={users.length} loading={isLoading} />
         <StatCard label={t("users.orgAdmins")} value={roleCount("org_admin")} loading={isLoading} accent="info" />
         <StatCard label={t("users.branchManagers")} value={roleCount("branch_manager")} loading={isLoading} accent="violet" />

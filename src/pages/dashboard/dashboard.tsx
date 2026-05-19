@@ -224,7 +224,7 @@ export default function Dashboard() {
       title={user ? greet(user.name.split(" ")[0], t) : t("nav.dashboard")}
       description={role ? t("dashboard.subtitle") : undefined}
     >
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
         {isSuperAdmin ? (
           <>
             <StatCard label={t("nav.orgs")} value={orgs.length} icon={Building2} onClick={() => navigate("/orgs")} />

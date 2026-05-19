@@ -333,7 +333,7 @@ const stats = data?.summary ?? { revenue: 0, completed: 0, voided: 0, discounts:
         )
       }
     >
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3">
         <StatCard label={t("orders.totalRevenue")} value={fmtMoney(stats.revenue)} loading={isLoading} icon={Receipt} accent="success" />
         <StatCard label={t("orders.completed")} value={stats.completed} loading={isLoading} icon={ShoppingBag} accent="info" />
         <StatCard label={t("orders.voidedOrders")} value={stats.voided} loading={isLoading} icon={Ban} accent="destructive" />

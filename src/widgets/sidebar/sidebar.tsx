@@ -136,7 +136,7 @@ function BrandLogo({ collapsed }: { collapsed: boolean }) {
   }
 
   return (
-    <svg viewBox="0 0 119.35 43.42" className="h-8 px-2 select-none flex-shrink-0 text-foreground" style={{ width: "auto" }}>
+    <svg viewBox="0 0 150 43.42" className="h-8 px-2 select-none flex-shrink-0 text-foreground" style={{ width: "auto" }}>
       <g id="Layer_1-2" data-name="Layer 1">
         <g>
           <rect className="fill-current" x="10.1" y=".95" width="5.25" height="31.51" rx=".66" ry=".66" transform="translate(-8.09 13.89) rotate(-45)"/>

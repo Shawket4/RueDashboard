@@ -327,7 +327,7 @@ export default function Branches() {
       description={t("branches.subtitle")}
       action={<Button onClick={() => { setEditBranch(null); setDialogOpen(true); }}><Plus /> {t("common.new")}</Button>}
     >
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
         <StatCard label={t("common.total")} value={branches.length} loading={isLoading} />
         <StatCard label={t("common.active")} value={branches.filter((b) => b.is_active).length} loading={isLoading} accent="success" />
         <StatCard label={t("branches.withPrinter")} value={branches.filter((b) => b.printer_brand).length} loading={isLoading} accent="violet" />

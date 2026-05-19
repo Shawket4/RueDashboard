@@ -38,7 +38,7 @@ export default function Login() {
   });
 
   return (
-    <div className="min-h-screen flex bg-background" dir="ltr">
+    <div className="min-h-screen flex bg-background">
       {/* Brand panel — flat cream */}
       <aside className="hidden lg:flex lg:w-1/2 xl:w-[55%] bg-[#FAF7F2]">
         <div className="flex flex-col justify-between w-full px-14 xl:px-20 py-14">
