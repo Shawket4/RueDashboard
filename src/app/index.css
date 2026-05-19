@@ -4,20 +4,27 @@
 
 @layer base {
   :root {
-    --background: 210 15% 97%; /* Soft slate-white #F4F6F8 */
-    --foreground: 210 73% 15%; /* Sufrix navy #0A2540 */
+    --background: 210 15% 97%;
+    /* Soft slate-white #F4F6F8 */
+    --foreground: 210 73% 15%;
+    /* Sufrix navy #0A2540 */
 
-    --card: 0 0% 100%; /* Crisp Pure White */
+    --card: 0 0% 100%;
+    /* Crisp Pure White */
     --card-foreground: 210 73% 15%;
 
     --popover: 0 0% 100%;
     --popover-foreground: 210 73% 15%;
 
-    --primary: 210 73% 15%; /* Sufrix Navy #0A2540 */
-    --primary-foreground: 210 15% 97%; /* Soft slate-white */
+    --primary: 210 73% 15%;
+    /* Sufrix Navy #0A2540 */
+    --primary-foreground: 210 15% 97%;
+    /* Soft slate-white */
 
-    --secondary: 13 52% 50%; /* Terracotta #C25B3F */
-    --secondary-foreground: 210 15% 97%; /* Soft slate-white */
+    --secondary: 13 52% 50%;
+    /* Terracotta #C25B3F */
+    --secondary-foreground: 210 15% 97%;
+    /* Soft slate-white */
 
     --muted: 210 15% 92%;
     --muted-foreground: 210 15% 45%;
@@ -39,14 +46,17 @@
 
     --border: 210 15% 88%;
     --input: 210 15% 88%;
-    --ring: 13 52% 50%; /* Terracotta focus ring */
+    --ring: 13 52% 50%;
+    /* Terracotta focus ring */
 
     --radius: 0.75rem;
   }
 
   .light-theme {
-    --background: 210 15% 97%; /* Soft slate-white #F4F6F8 */
-    --foreground: 210 73% 15%; /* Sufrix navy #0A2540 */
+    --background: 210 15% 97%;
+    /* Soft slate-white #F4F6F8 */
+    --foreground: 210 73% 15%;
+    /* Sufrix navy #0A2540 */
 
     --card: 0 0% 100%;
     --card-foreground: 210 73% 15%;
@@ -84,17 +94,22 @@
   }
 
   .dark {
-    --background: 210 73% 8%; /* Very dark Sufrix Navy */
-    --foreground: 210 15% 97%; /* Soft slate-white */
+    --background: 210 73% 8%;
+    /* Very dark Sufrix Navy */
+    --foreground: 210 15% 97%;
+    /* Soft slate-white */
 
-    --card: 210 73% 12%; /* Slightly lighter dark navy */
+    --card: 210 73% 12%;
+    /* Slightly lighter dark navy */
     --card-foreground: 210 15% 97%;
 
     --popover: 210 73% 12%;
     --popover-foreground: 210 15% 97%;
 
-    --primary: 13 52% 50%; /* Terracotta #C25B3F - pops in dark mode! */
-    --primary-foreground: 210 15% 97%; /* Soft slate-white */
+    --primary: 13 52% 50%;
+    /* Terracotta #C25B3F - pops in dark mode! */
+    --primary-foreground: 210 15% 97%;
+    /* Soft slate-white */
 
     --secondary: 210 50% 20%;
     --secondary-foreground: 210 15% 97%;
@@ -144,12 +159,15 @@
   ::-webkit-scrollbar {
     @apply w-2 h-2;
   }
+
   ::-webkit-scrollbar-track {
     @apply bg-transparent;
   }
+
   ::-webkit-scrollbar-thumb {
     @apply bg-muted-foreground/30 rounded-full;
   }
+
   ::-webkit-scrollbar-thumb:hover {
     @apply bg-muted-foreground/50;
   }
@@ -159,22 +177,27 @@
   .safe-top {
     padding-top: env(safe-area-inset-top);
   }
+
   .safe-bottom {
     padding-bottom: env(safe-area-inset-bottom);
   }
+
   .brand-gradient {
-    background: linear-gradient(135deg, hsl(210 73% 15%), hsl(13 52% 50%)); /* Sufrix Navy to Terracotta */
+    background: linear-gradient(135deg, #1a0f0a 0%, #2d1810 50%, #0f0805 100%);
   }
+
   .brand-gradient-text {
     background: linear-gradient(135deg, hsl(210 73% 15%), hsl(13 52% 50%));
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
   }
+
   /* Hide scrollbar for specific containers */
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
+
   .no-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
@@ -183,6 +206,7 @@
 
 /* Prevent iOS auto-zoom on input focus by ensuring font-size is at least 16px on mobile viewports */
 @media screen and (max-width: 768px) {
+
   input,
   select,
   textarea,
